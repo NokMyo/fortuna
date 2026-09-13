@@ -23,6 +23,7 @@ confirmation_brier: .skip 8
 confirmation_p: .skip 8
 confirmation_rows: .skip 30*64
 confirmation_end:
+.equ CONFIRMATION_BYTES,confirmation_end-confirmation_begin
 confirmation_null: .skip NULL_COUNT*8
 .section .text
 # BH adjusted q-values: stable index sort, reverse cumulative minimum.
@@ -74,7 +75,7 @@ FN BHCorrection
 FN ValidateHistory,32
     mov dword ptr [rip+validation_complete],0
     lea rcx,[rip+confirmation_begin]
-    mov edx,confirmation_end-confirmation_begin
+    mov edx,CONFIRMATION_BYTES
     call Zero
     mov eax,[rip+history_count]
     cmp eax,120
@@ -82,7 +83,7 @@ FN ValidateHistory,32
     sub eax,30
 1:  mov [rip+validation_stop],eax
     lea rcx,[rip+validation_begin]
-    mov edx,validation_end-validation_begin
+    mov edx,VALIDATION_BYTES
     call Zero
     lea rcx,[rip+null_totals]
     mov edx,NULL_COUNT*8

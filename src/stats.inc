@@ -127,7 +127,7 @@ FN ExtractFeatures
 
 FN ResetStats
     lea rcx,[rip+stats_begin]
-    mov edx,stats_end-stats_begin
+    mov edx,STATS_BYTES
     call Zero
     END
 FN RebuildStats

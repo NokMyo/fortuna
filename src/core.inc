@@ -159,6 +159,7 @@ feature_m2: .skip FEATURE_COUNT*FEATURE_COUNT*8
 entropy_mean: .skip 5*8
 entropy_m2: .skip 5*8
 stats_end:
+.equ STATS_BYTES,stats_end-stats_begin
 
 feature_buf: .skip FEATURE_COUNT*8
 feature_delta: .skip FEATURE_COUNT*8
@@ -176,6 +177,7 @@ matrix_work: .skip 45*90*8
 number_fast: .skip 45*8
 pair_fast: .skip 45*45*8
 raw_models: .skip MODEL_COUNT*8
+.equ MODEL_BYTES,raw_models-number_models
 norm_center: .skip MODEL_COUNT*8
 norm_scale: .skip MODEL_COUNT*8
 model_weights: .skip MODEL_COUNT*8
@@ -222,6 +224,7 @@ validation_ablation: .skip MODEL_COUNT*8
 validation_bins: .skip 10*3*8
 validation_rows: .skip MAX_DRAWS*64
 validation_end:
+.equ VALIDATION_BYTES,validation_end-validation_begin
 
 .section .text
 # Zero(ptr,bytes), Copy(dst,src,bytes); safe for zero length, non-overlap Copy.

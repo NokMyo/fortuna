@@ -1,82 +1,4 @@
 .section .rdata,"dr"
-sha_test_input: .ascii "abc"
-sha_test_expected: .byte 0xba,0x78,0x16,0xbf,0x8f,0x01,0xcf,0xea,0x41,0x41,0x40,0xde,0x5d,0xae,0x22,0x23,0xb0,0x03,0x61,0xa3,0x96,0x17,0x7a,0x9c,0xb4,0x10,0xff,0x61,0xf2,0x00,0x15,0xad
-bad_csv: .ascii "1,1,2,3,4,5,5\n"
-bad_csv_end:
-.section .text
-FN SelfTest,64
-    mov ebp,10
-    lea rcx,[rip+sha_test_input]
-    mov edx,3
-    lea r8,[rsp+32]
-    call Sha256
-    lea rbx,[rip+sha_test_expected]
-    xor esi,esi
-1:  mov al,[rbx+rsi]
-    cmp al,[rsp+32+rsi]
-    jne .st_fail
-    inc esi
-    cmp esi,32
-    jb 1b
-    inc ebp
-    mov ecx,45
-    mov edx,6
-    call Choose
-    cmp rax,TOTAL_COMBINATIONS
-    jne .st_fail
-    inc ebp
-    mov dword ptr [rip+rng_mode],1
-    mov qword ptr [rip+rng_state],86421
-    mov esi,10000
-1:  call GenerateUniformMask
-    mov rbx,rax
-    shr rax,45
-    jnz .st_fail
-    mov rcx,rbx
-    call PopCount64
-    cmp eax,6
-    jne .st_fail
-    dec esi
-    jnz 1b
-    inc ebp
-    lea rcx,[rip+selftest_csv]
-    mov edx,selftest_csv_end-selftest_csv
-    call ParseCsv
-    cmp eax,1
-    jne .st_fail
-    cmp dword ptr [rip+draw_count],60
-    jne .st_fail
-    inc ebp
-    lea rcx,[rip+bad_csv]
-    mov edx,bad_csv_end-bad_csv
-    call ParseCsv
-    test eax,eax
-    jnz .st_fail
-    cmp dword ptr [rip+draw_count],60
-    jne .st_fail
-    inc ebp
-    call AnalyzeOracle
-    test eax,eax
-    jz .st_fail
-    cmp dword ptr [rip+scan_count],TOTAL_COMBINATIONS
-    jne .st_fail
-    cmp dword ptr [rip+field_count],512
-    jne .st_fail
-    inc ebp
-    mov ecx,10
-    call GenerateTickets
-    test eax,eax
-    jz .st_fail
-    inc ebp
-    call BuildReport
-    test eax,eax
-    jz .st_fail
-    xor eax,eax
-    jmp .st_out
-.st_fail: mov eax,ebp
-.st_out: END 64
-
-.section .rdata,"dr"
 selftest_csv:
     .ascii "round,n1,n2,n3,n4,n5,n6\n"
     .ascii "1,7,13,15,24,25,40\n"
@@ -140,6 +62,87 @@ selftest_csv:
     .ascii "59,8,13,22,32,35,42\n"
     .ascii "60,7,9,11,16,19,27\n"
 selftest_csv_end:
+.equ SELFTEST_BYTES,selftest_csv_end-selftest_csv
+.section .rdata,"dr"
+sha_test_input: .ascii "abc"
+sha_test_expected: .byte 0xba,0x78,0x16,0xbf,0x8f,0x01,0xcf,0xea,0x41,0x41,0x40,0xde,0x5d,0xae,0x22,0x23,0xb0,0x03,0x61,0xa3,0x96,0x17,0x7a,0x9c,0xb4,0x10,0xff,0x61,0xf2,0x00,0x15,0xad
+bad_csv: .ascii "1,1,2,3,4,5,5\n"
+bad_csv_end:
+.equ BAD_CSV_BYTES,bad_csv_end-bad_csv
+.section .text
+FN SelfTest,64
+    mov ebp,10
+    lea rcx,[rip+sha_test_input]
+    mov edx,3
+    lea r8,[rsp+32]
+    call Sha256
+    lea rbx,[rip+sha_test_expected]
+    xor esi,esi
+1:  mov al,[rbx+rsi]
+    cmp al,[rsp+32+rsi]
+    jne .st_fail
+    inc esi
+    cmp esi,32
+    jb 1b
+    inc ebp
+    mov ecx,45
+    mov edx,6
+    call Choose
+    cmp rax,TOTAL_COMBINATIONS
+    jne .st_fail
+    inc ebp
+    mov dword ptr [rip+rng_mode],1
+    mov qword ptr [rip+rng_state],86421
+    mov esi,10000
+1:  call GenerateUniformMask
+    mov rbx,rax
+    shr rax,45
+    jnz .st_fail
+    mov rcx,rbx
+    call PopCount64
+    cmp eax,6
+    jne .st_fail
+    dec esi
+    jnz 1b
+    inc ebp
+    lea rcx,[rip+selftest_csv]
+    mov edx,SELFTEST_BYTES
+    call ParseCsv
+    cmp eax,1
+    jne .st_fail
+    cmp dword ptr [rip+draw_count],60
+    jne .st_fail
+    inc ebp
+    lea rcx,[rip+bad_csv]
+    mov edx,BAD_CSV_BYTES
+    call ParseCsv
+    test eax,eax
+    jnz .st_fail
+    cmp dword ptr [rip+draw_count],60
+    jne .st_fail
+    inc ebp
+    call AnalyzeOracle
+    test eax,eax
+    jz .st_fail
+    cmp dword ptr [rip+scan_count],TOTAL_COMBINATIONS
+    jne .st_fail
+    cmp dword ptr [rip+field_count],512
+    jne .st_fail
+    inc ebp
+    mov ecx,10
+    call GenerateTickets
+    test eax,eax
+    jz .st_fail
+    inc ebp
+    call BuildReport
+    test eax,eax
+    jz .st_fail
+    xor eax,eax
+    jmp .st_out
+.st_fail: mov eax,ebp
+.st_out: END 64
+
+
 
 .section .text
 # Small non-destructive startup gate; the full fixture test is CLI/CI-only.
