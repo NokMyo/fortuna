@@ -106,7 +106,7 @@ FN SelfTest,64
     jnz 1b
     inc ebp
     lea rcx,[rip+selftest_csv]
-    mov edx,SELFTEST_BYTES
+    mov edx,offset SELFTEST_BYTES
     call ParseCsv
     cmp eax,1
     jne .st_fail
@@ -114,7 +114,7 @@ FN SelfTest,64
     jne .st_fail
     inc ebp
     lea rcx,[rip+bad_csv]
-    mov edx,BAD_CSV_BYTES
+    mov edx,offset BAD_CSV_BYTES
     call ParseCsv
     test eax,eax
     jnz .st_fail

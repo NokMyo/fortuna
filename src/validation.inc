@@ -75,7 +75,7 @@ FN BHCorrection
 FN ValidateHistory,32
     mov dword ptr [rip+validation_complete],0
     lea rcx,[rip+confirmation_begin]
-    mov edx,CONFIRMATION_BYTES
+    mov edx,offset CONFIRMATION_BYTES
     call Zero
     mov eax,[rip+history_count]
     cmp eax,120
@@ -83,7 +83,7 @@ FN ValidateHistory,32
     sub eax,30
 1:  mov [rip+validation_stop],eax
     lea rcx,[rip+validation_begin]
-    mov edx,VALIDATION_BYTES
+    mov edx,offset VALIDATION_BYTES
     call Zero
     lea rcx,[rip+null_totals]
     mov edx,NULL_COUNT*8

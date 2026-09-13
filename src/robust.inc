@@ -160,11 +160,11 @@ FN BuildWorlds,32
     mov [rip+world_cutoff],eax
     lea rcx,[rip+stats_backup]
     lea rdx,[rip+stats_begin]
-    mov r8d,STATS_BYTES
+    mov r8d,offset STATS_BYTES
     call Copy
     lea rcx,[rip+model_backup]
     lea rdx,[rip+number_models]
-    mov r8d,MODEL_BYTES
+    mov r8d,offset MODEL_BYTES
     call Copy
     mov rax,[rip+rng_state]
     mov [rsp+32],rax
@@ -297,11 +297,11 @@ FN BuildWorlds,32
 .bw_restore:
     lea rcx,[rip+stats_begin]
     lea rdx,[rip+stats_backup]
-    mov r8d,STATS_BYTES
+    mov r8d,offset STATS_BYTES
     call Copy
     lea rcx,[rip+number_models]
     lea rdx,[rip+model_backup]
-    mov r8d,MODEL_BYTES
+    mov r8d,offset MODEL_BYTES
     call Copy
     mov rax,[rsp+32]
     mov [rip+rng_state],rax
