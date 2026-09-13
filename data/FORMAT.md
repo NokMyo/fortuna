@@ -14,7 +14,7 @@ round,date,n1,n2,n3,n4,n5,n6,bonus
 
 Bonus is optional in either form. Date accepts `YYYY-MM-DD` or `YYYYMMDD`. Use the same column form throughout a file. Dates, when supplied, must be valid Gregorian dates in 2002–9999 and strictly increase with the round. The parser does not authenticate the source or cross-check each date against the official weekly calendar.
 
-Main numbers must be six distinct integers 1–45. Bonus, when present, must be 1–45 and different from all six. Integers may be double-quoted and surrounded by spaces. Embedded quotes, escaped CSV payloads, comments, fractional/signed values, empty fields and extra columns are rejected. Round numbers must be positive signed-32-bit integers. Rows and main numbers can be unsorted on input; canonicalization sorts both. Duplicate or missing rounds are rejected. A dataset may begin at a round other than 1 but must then be contiguous.
+Main numbers must be six distinct integers 1–45. Bonus, when present, must be 1–45 and different from all six. Integers may be double-quoted and surrounded by spaces. Embedded quotes, escaped CSV payloads, comments, fractional/signed values, empty fields and extra columns are rejected. Round numbers must be integers 1–1,000,000. Rows and main numbers can be unsorted on input; canonicalization sorts both. Duplicate or missing rounds are rejected. A dataset may begin at a round other than 1 but must then be contiguous.
 
 Import is transactional: all rows are parsed and verified in a staging buffer. One error rejects the entire import, leaving the prior dataset and hash intact. Successful replacement invalidates the prior analysis and generated display.
 

@@ -3,7 +3,7 @@ $exe = (Resolve-Path build/FebiusFortuna.exe).Path
 function Run-Checked([string]$arguments, [int]$expected = 0) {
     $p = Start-Process -FilePath $exe -ArgumentList $arguments -PassThru
     if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "Timed out: $arguments" }
-    if ($p.ExitCode -ne $expected) { throw "Exit $($p.ExitCode), expected $expected : $arguments" }
+    if ($p.ExitCode -ne $expected) { python tests/debug-windows.py $exe $arguments; throw "Exit $($p.ExitCode), expected $expected : $arguments" }
 }
 Run-Checked '--self-test'
 New-Item -ItemType Directory -Force 'build/한글 경로' | Out-Null

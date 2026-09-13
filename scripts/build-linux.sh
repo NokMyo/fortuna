@@ -1,6 +1,8 @@
 #!/bin/sh
 # Cross-build identical assembly with MinGW binutils; no compiler runtime linked.
 set -eu
+: "${FORTUNA_MINGW_INCLUDE:=/usr/x86_64-w64-mingw32/include}"
+: "${FORTUNA_MINGW_LIB:=/usr/x86_64-w64-mingw32/lib}"
 cd "$(dirname "$0")/.."
 mkdir -p build
 {
