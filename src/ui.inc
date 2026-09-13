@@ -1,417 +1,576 @@
-# ---------------------------------------------------------------------------
-# Entry and Win32 UI
-# ---------------------------------------------------------------------------
-WinMainCRTStartup:
-    sub rsp, 40
-    xor rcx, rcx
-    call GetModuleHandleA
-    mov qword ptr [rip + h_instance], rax
-
-    # WNDCLASSEXA (80 bytes)
-    lea rdi, [rip + wc_buf]
-    xor eax, eax
-    mov ecx, 10
-    rep stosq
-    lea rdi, [rip + wc_buf]
-    mov dword ptr [rdi + 0], 80
-    mov dword ptr [rdi + 4], 0x0003
-    lea rax, [rip + WndProc]
-    mov qword ptr [rdi + 8], rax
-    mov rax, qword ptr [rip + h_instance]
-    mov qword ptr [rdi + 24], rax
-    xor rcx, rcx
-    mov edx, IDC_ARROW
-    call LoadCursorA
-    mov qword ptr [rdi + 40], rax
-    mov qword ptr [rdi + 48], COLOR_WINDOW_BRUSH
-    lea rax, [rip + class_name]
-    mov qword ptr [rdi + 64], rax
-    lea rcx, [rip + wc_buf]
-    call RegisterClassExA
-    test ax, ax
-    jz .fatal
-
-    sub rsp, 96
-    mov qword ptr [rsp + 32], -2147483648
-    mov qword ptr [rsp + 40], -2147483648
-    mov qword ptr [rsp + 48], 800
-    mov qword ptr [rsp + 56], 585
-    mov qword ptr [rsp + 64], 0
-    mov qword ptr [rsp + 72], 0
-    mov rax, qword ptr [rip + h_instance]
-    mov qword ptr [rsp + 80], rax
-    mov qword ptr [rsp + 88], 0
-    xor ecx, ecx
-    lea rdx, [rip + class_name]
-    lea r8, [rip + app_title]
-    mov r9d, WS_OVERLAPPEDWINDOW
-    call CreateWindowExA
-    add rsp, 96
-    test rax, rax
-    jz .fatal
-    mov qword ptr [rip + h_main], rax
-    mov rcx, rax
-    mov edx, SW_SHOWDEFAULT
-    call ShowWindow
-    mov rcx, qword ptr [rip + h_main]
-    call UpdateWindow
-.msg_loop:
-    lea rcx, [rip + msg_buf]
-    xor edx, edx
-    xor r8d, r8d
-    xor r9d, r9d
-    call GetMessageA
-    test eax, eax
-    jle .exit
-    lea rcx, [rip + msg_buf]
-    call TranslateMessage
-    lea rcx, [rip + msg_buf]
-    call DispatchMessageA
-    jmp .msg_loop
-.exit:
-    xor ecx, ecx
+FN WinMainCRTStartup,32
+    xor ecx,ecx
+    call GetModuleHandleW
+    mov [rip+h_instance],rax
+    lea rcx,[rip+config_version]
+    xor edx,edx
+1:  cmp byte ptr [rcx+rdx],0
+    je 2f
+    inc edx
+    jmp 1b
+2:  lea r8,[rip+hash_config]
+    call Sha256
+    call InitStorage
+    call GetCommandLineW
+    mov rcx,rax
+    lea rdx,[rip+command_argc]
+    call CommandLineToArgvW
+    mov rbx,rax
+    test rax,rax
+    jz .entry_gui
+    cmp dword ptr [rip+command_argc],2
+    jb .entry_free
+    mov rcx,[rbx+8]
+    lea rdx,[rip+cmd_selftest]
+    call lstrcmpW
+    test eax,eax
+    jnz 1f
+    call SelfTest
+    mov ecx,eax
     call ExitProcess
-.fatal:
-    mov ecx, 1
+1:  mov rcx,[rbx+8]
+    lea rdx,[rip+cmd_smoke]
+    call lstrcmpW
+    test eax,eax
+    jnz 2f
+    mov dword ptr [rip+smoke_mode],1
+    jmp .entry_free
+2:  mov rcx,[rbx+8]
+    lea rdx,[rip+cmd_analyze]
+    call lstrcmpW
+    test eax,eax
+    jnz .entry_bad_args
+    cmp dword ptr [rip+command_argc],4
+    jne .entry_bad_args
+    mov rcx,[rbx+16]
+    call LoadCsvFile
+    test eax,eax
+    jz .entry_error
+    call AnalyzeOracle
+    test eax,eax
+    jz .entry_error
+    call BuildReport
+    test eax,eax
+    jz .entry_error
+    mov r8d,eax
+    mov rcx,[rbx+24]
+    lea rdx,[rip+report_buffer]
+    call WriteBytes
+    test eax,eax
+    jz .entry_error
+    xor ecx,ecx
     call ExitProcess
+.entry_bad_args:
+    mov ecx,2
+    call ExitProcess
+.entry_error:
+    mov ecx,1
+    call ExitProcess
+.entry_free:
+    mov rcx,rbx
+    call LocalFree
+.entry_gui:
+    call StartupCheck
+    test eax,eax
+    jnz 3f
+    xor ecx,ecx
+    lea rdx,[rip+text_startup_fail]
+    lea r8,[rip+app_title]
+    mov r9d,0x10
+    call MessageBoxW
+    mov ecx,3
+    call ExitProcess
+3:
+    mov dword ptr [rsp+32],8
+    mov dword ptr [rsp+36],0x20
+    lea rcx,[rsp+32]
+    call InitCommonControlsEx
+    mov rcx,[rip+h_instance]
+    mov edx,101
+    xor r8d,r8d
+    lea r9,[rip+DialogProc]
+    mov qword ptr [rsp+32],0
+    call DialogBoxParamW
+    xor ecx,ecx
+    cmp rax,-1
+    jne 1f
+    mov ecx,1
+1:  call ExitProcess
+    END 32
 
-MakeFont:
-    push rbp
-    mov rbp, rsp
-    sub rsp, 112
-    mov r10d, ecx
-    mov r11d, edx
-    mov ecx, r10d
-    xor edx, edx
-    xor r8d, r8d
-    xor r9d, r9d
-    mov qword ptr [rsp + 32], r11
-    mov qword ptr [rsp + 40], 0
-    mov qword ptr [rsp + 48], 0
-    mov qword ptr [rsp + 56], 0
-    mov qword ptr [rsp + 64], 1
-    mov qword ptr [rsp + 72], 0
-    mov qword ptr [rsp + 80], 0
-    mov qword ptr [rsp + 88], 5
-    mov qword ptr [rsp + 96], 0x20
-    lea rax, [rip + font_face]
-    mov qword ptr [rsp + 104], rax
-    call CreateFontA
-    leave
-    ret
+FN MakeFont,80
+    mov ebx,ecx
+    mov ebp,edx
+    mov rcx,[rip+h_main]
+    call GetDpiForWindow
+    test eax,eax
+    jnz 1f
+    mov eax,96
+1:  imul eax,ebx
+    cdq
+    mov ecx,96
+    idiv ecx
+    neg eax
+    mov ecx,eax
+    xor edx,edx
+    xor r8d,r8d
+    xor r9d,r9d
+    mov [rsp+32],rbp
+    mov qword ptr [rsp+40],0
+    mov qword ptr [rsp+48],0
+    mov qword ptr [rsp+56],0
+    mov qword ptr [rsp+64],1
+    mov qword ptr [rsp+72],0
+    mov qword ptr [rsp+80],0
+    mov qword ptr [rsp+88],5
+    mov qword ptr [rsp+96],0
+    lea rax,[rip+font_name]
+    mov [rsp+104],rax
+    call CreateFontW
+    END 80
+FN SetControlFont
+    mov rbx,rdx
+    mov edx,ecx
+    mov rcx,[rip+h_main]
+    call GetDlgItem
+    mov rcx,rax
+    mov edx,0x30
+    mov r8,rbx
+    mov r9d,1
+    call SendMessageW
+    END
+FN SetBusyControls
+    mov ebp,ecx
+    mov esi,1001
+1:  mov rcx,[rip+h_main]
+    mov edx,esi
+    call GetDlgItem
+    mov rcx,rax
+    mov edx,1
+    sub edx,ebp
+    cmp esi,1004
+    jne 2f
+    mov edx,ebp
+2:  call EnableWindow
+    inc esi
+    cmp esi,1010
+    jbe 1b
+    END
 
-CreateChild:
-    push rbp
-    mov rbp, rsp
-    sub rsp, 96
-    mov r10, rcx
-    mov r11, rdx
-    mov eax, r8d
-    or eax, WS_CHILD | WS_VISIBLE
-    mov r8d, eax
-    mov rax, r9
-    movsxd rcx, dword ptr [rbp + 48]
-    mov qword ptr [rsp + 32], rcx
-    movsxd rcx, dword ptr [rbp + 56]
-    mov qword ptr [rsp + 40], rcx
-    movsxd rcx, dword ptr [rbp + 64]
-    mov qword ptr [rsp + 48], rcx
-    movsxd rcx, dword ptr [rbp + 72]
-    mov qword ptr [rsp + 56], rcx
-    mov qword ptr [rsp + 64], rax
-    movsxd rcx, dword ptr [rbp + 80]
-    mov qword ptr [rsp + 72], rcx
-    mov rcx, qword ptr [rip + h_instance]
-    mov qword ptr [rsp + 80], rcx
-    mov qword ptr [rsp + 88], 0
-    xor ecx, ecx
-    mov rdx, r10
-    mov r9d, r8d
-    mov r8, r11
-    call CreateWindowExA
-    leave
-    ret
-
-WndProc:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    sub rsp, 40
-    mov rbx, rcx
-    cmp edx, WM_CREATE
-    je .create
-    cmp edx, WM_COMMAND
-    je .command
-    cmp edx, WM_APP_DONE
-    je .analysis_done
-    cmp edx, WM_DESTROY
-    je .destroy
-    mov rcx, rbx
-    call DefWindowProcA
-    jmp .return
-.create:
-    mov qword ptr [rip + h_main], rbx
-    mov ecx, 28
-    mov edx, 700
+FN DialogProc,128
+    mov rbx,rcx
+    mov ebp,edx
+    mov rsi,r8
+    cmp edx,0x110
+    je .dp_init
+    cmp edx,0x111
+    je .dp_command
+    cmp edx,0x113
+    je .dp_timer
+    cmp edx,0x8001
+    je .dp_done
+    cmp edx,0x10
+    je .dp_close
+    xor eax,eax
+    jmp .dp_out
+.dp_init:
+    mov [rip+h_main],rbx
+    mov ecx,32
+    mov edx,700
     call MakeFont
-    mov qword ptr [rip + h_font_title], rax
-    mov ecx, 42
-    mov edx, 700
+    mov [rip+h_title_font],rax
+    mov rdx,rax
+    mov ecx,1100
+    call SetControlFont
+    mov ecx,29
+    mov edx,700
     call MakeFont
-    mov qword ptr [rip + h_font_result], rax
-    mov ecx, 18
-    mov edx, 400
-    call MakeFont
-    mov qword ptr [rip + h_font_ui], rax
-
-    sub rsp, 80
-    mov dword ptr [rsp + 32], 24
-    mov dword ptr [rsp + 40], 16
-    mov dword ptr [rsp + 48], 735
-    mov dword ptr [rsp + 56], 36
-    mov dword ptr [rsp + 64], 0
-    lea rcx, [rip + static_class]
-    lea rdx, [rip + ui_title]
-    xor r8d, r8d
-    mov r9, rbx
-    call CreateChild
-    add rsp, 80
-    mov rcx, rax
-    mov edx, WM_SETFONT
-    mov r8, qword ptr [rip + h_font_title]
-    mov r9d, 1
-    call SendMessageA
-
-    sub rsp, 80
-    mov dword ptr [rsp + 32], 24
-    mov dword ptr [rsp + 40], 55
-    mov dword ptr [rsp + 48], 735
-    mov dword ptr [rsp + 56], 28
-    mov dword ptr [rsp + 64], 0
-    lea rcx, [rip + static_class]
-    lea rdx, [rip + ui_subtitle]
-    xor r8d, r8d
-    mov r9, rbx
-    call CreateChild
-    add rsp, 80
-
-    sub rsp, 80
-    mov dword ptr [rsp + 32], 24
-    mov dword ptr [rsp + 40], 94
-    mov dword ptr [rsp + 48], 735
-    mov dword ptr [rsp + 56], 82
-    mov dword ptr [rsp + 64], 0
-    lea rcx, [rip + static_class]
-    lea rdx, [rip + ui_result_empty]
-    mov r8d, WS_BORDER | SS_CENTER
-    mov r9, rbx
-    call CreateChild
-    add rsp, 80
-    mov qword ptr [rip + h_result], rax
-    mov rcx, rax
-    mov edx, WM_SETFONT
-    mov r8, qword ptr [rip + h_font_result]
-    mov r9d, 1
-    call SendMessageA
-
-    sub rsp, 80
-    mov dword ptr [rsp + 32], 24
-    mov dword ptr [rsp + 40], 188
-    mov dword ptr [rsp + 48], 735
-    mov dword ptr [rsp + 56], 28
-    mov dword ptr [rsp + 64], 0
-    lea rcx, [rip + static_class]
-    lea rdx, [rip + ui_status_ready]
-    xor r8d, r8d
-    mov r9, rbx
-    call CreateChild
-    add rsp, 80
-    mov qword ptr [rip + h_status], rax
-
-    sub rsp, 80
-    mov dword ptr [rsp + 32], 24
-    mov dword ptr [rsp + 40], 232
-    mov dword ptr [rsp + 48], 170
-    mov dword ptr [rsp + 56], 38
-    mov dword ptr [rsp + 64], ID_LOAD
-    lea rcx, [rip + button_class]
-    lea rdx, [rip + btn_load]
-    mov r8d, BS_PUSHBUTTON
-    mov r9, rbx
-    call CreateChild
-    add rsp, 80
-    mov qword ptr [rip + h_btn_load], rax
-
-    sub rsp, 80
-    mov dword ptr [rsp + 32], 207
-    mov dword ptr [rsp + 40], 232
-    mov dword ptr [rsp + 48], 170
-    mov dword ptr [rsp + 56], 38
-    mov dword ptr [rsp + 64], ID_ANALYZE
-    lea rcx, [rip + button_class]
-    lea rdx, [rip + btn_analyze]
-    mov r8d, BS_PUSHBUTTON
-    mov r9, rbx
-    call CreateChild
-    add rsp, 80
-    mov qword ptr [rip + h_btn_analyze], rax
-
-    sub rsp, 80
-    mov dword ptr [rsp + 32], 390
-    mov dword ptr [rsp + 40], 232
-    mov dword ptr [rsp + 48], 170
-    mov dword ptr [rsp + 56], 38
-    mov dword ptr [rsp + 64], ID_RECALC
-    lea rcx, [rip + button_class]
-    lea rdx, [rip + btn_recalc]
-    mov r8d, BS_PUSHBUTTON
-    mov r9, rbx
-    call CreateChild
-    add rsp, 80
-    mov qword ptr [rip + h_btn_recalc], rax
-    mov rcx, rax
-    xor edx, edx
-    call EnableWindow
-
-    sub rsp, 80
-    mov dword ptr [rsp + 32], 24
-    mov dword ptr [rsp + 40], 287
-    mov dword ptr [rsp + 48], 735
-    mov dword ptr [rsp + 56], 180
-    mov dword ptr [rsp + 64], 0
-    lea rcx, [rip + edit_class]
-    lea rdx, [rip + metrics_empty]
-    mov r8d, WS_BORDER | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL
-    mov r9, rbx
-    call CreateChild
-    add rsp, 80
-    mov qword ptr [rip + h_metrics], rax
-    mov rcx, rax
-    mov edx, WM_SETFONT
-    mov r8, qword ptr [rip + h_font_ui]
-    mov r9d, 1
-    call SendMessageA
-
-    sub rsp, 80
-    mov dword ptr [rsp + 32], 24
-    mov dword ptr [rsp + 40], 480
-    mov dword ptr [rsp + 48], 735
-    mov dword ptr [rsp + 56], 48
-    mov dword ptr [rsp + 64], 0
-    lea rcx, [rip + static_class]
-    lea rdx, [rip + disclaimer]
-    xor r8d, r8d
-    mov r9, rbx
-    call CreateChild
-    add rsp, 80
-    xor eax, eax
-    jmp .return
-.command:
-    mov eax, r8d
-    and eax, 0xFFFF
-    cmp eax, ID_LOAD
-    je .do_load
-    cmp eax, ID_ANALYZE
-    je .do_analyze
-    cmp eax, ID_RECALC
-    je .do_recalc
-    xor eax, eax
-    jmp .return
-.do_load:
-    cmp dword ptr [rip + analysis_busy], 0
-    jne .busy_msg
-    call ChooseAndLoadCsv
-    xor eax, eax
-    jmp .return
-.do_analyze:
-    cmp dword ptr [rip + analysis_busy], 0
-    jne .busy_msg
-    cmp dword ptr [rip + draw_count], 30
-    jb .need_data
-    mov dword ptr [rip + analysis_busy], 1
-    mov dword ptr [rip + analysis_ready], 0
-    mov rcx, qword ptr [rip + h_status]
-    lea rdx, [rip + ui_status_analyzing]
-    call SetWindowTextA
-    mov rcx, qword ptr [rip + h_btn_load]
-    xor edx, edx
-    call EnableWindow
-    mov rcx, qword ptr [rip + h_btn_analyze]
-    xor edx, edx
-    call EnableWindow
-    sub rsp, 16
-    xor ecx, ecx
-    xor edx, edx
-    lea r8, [rip + AnalysisThread]
-    xor r9d, r9d
-    mov qword ptr [rsp + 32], 0
-    mov qword ptr [rsp + 40], 0
+    mov [rip+h_result_font],rax
+    mov rdx,rax
+    mov ecx,1101
+    call SetControlFont
+    xor ecx,ecx
+    call SetBusyControls
+    mov rcx,rbx
+    mov edx,1106
+    call GetDlgItem
+    mov rcx,rax
+    mov edx,0x406
+    xor r8d,r8d
+    mov r9d,100
+    call SendMessageW
+    mov rcx,rbx
+    mov edx,1
+    mov r8d,150
+    xor r9d,r9d
+    call SetTimer
+    cmp dword ptr [rip+smoke_mode],1
+    jne .dp_true
+    mov ecx,5
+    call GenerateTickets
+    call UpdateResultUI
+    jmp .dp_true
+.dp_command:
+    mov eax,esi
+    and eax,0xffff
+    cmp eax,2
+    je .dp_close
+    cmp eax,ID_EXIT
+    je .dp_close
+    cmp eax,ID_CANCEL
+    je .dp_cancel
+    cmp eax,ID_ABOUT
+    je .dp_about
+    cmp eax,ID_RELEASES
+    je .dp_releases
+    cmp eax,ID_MANUAL
+    je .dp_manual
+    cmp dword ptr [rip+analysis_busy],0
+    jne .dp_busy
+    cmp eax,ID_LOAD
+    je .dp_load
+    cmp eax,ID_ANALYZE
+    je .dp_analyze
+    cmp eax,ID_GENERATE
+    je .dp_generate
+    cmp eax,ID_FIVE
+    je .dp_five
+    cmp eax,ID_TEN
+    je .dp_ten
+    cmp eax,ID_COPY
+    je .dp_copy
+    cmp eax,ID_SAVE
+    je .dp_save
+    cmp eax,ID_REPORT
+    je .dp_report
+    cmp eax,ID_DETAILS
+    je .dp_details
+    cmp eax,ID_FOLDER
+    je .dp_folder
+    cmp eax,ID_UNIFORM
+    je .dp_uniform
+    cmp eax,ID_SEAL
+    je .dp_seal
+    jmp .dp_true
+.dp_busy:
+    lea rcx,[rip+text_busy]
+    call Notify
+    jmp .dp_true
+.dp_load:
+    xor ecx,ecx
+    call DialogFile
+    test eax,eax
+    jz .dp_true
+    lea rcx,[rip+file_path]
+    call LoadCsvFile
+    test eax,eax
+    jz .dp_load_error
+    mov eax,[rip+last_round]
+    inc eax
+    mov [rsp+32],rax
+    lea rcx,[rip+ui_status]
+    lea rdx,[rip+fmt_data]
+    mov r8d,[rip+history_count]
+    mov r9d,[rip+last_round]
+    call wsprintfW
+    mov rcx,rbx
+    mov edx,1105
+    lea r8,[rip+ui_status]
+    call SetDlgItemTextW
+    call UpdateResultUI
+    lea rcx,[rip+text_loaded]
+    call Notify
+    jmp .dp_true
+.dp_load_error:
+    lea rcx,[rip+ui_status]
+    lea rdx,[rip+fmt_error]
+    mov r8d,[rip+parse_error]
+    mov r9d,[rip+parse_line]
+    call wsprintfW
+    lea rcx,[rip+ui_status]
+    call Alert
+    jmp .dp_true
+.dp_analyze:
+    cmp dword ptr [rip+history_count],60
+    jb .dp_need
+    mov dword ptr [rip+analysis_busy],1
+    mov dword ptr [rip+cancel_flag],0
+    mov dword ptr [rip+field_ready],0
+    mov ecx,1
+    call SetBusyControls
+    xor ecx,ecx
+    xor edx,edx
+    lea r8,[rip+AnalysisThread]
+    xor r9d,r9d
+    mov qword ptr [rsp+32],0
+    mov qword ptr [rsp+40],0
     call CreateThread
-    add rsp, 16
-    test rax, rax
-    jnz .thread_ok
-    mov dword ptr [rip + analysis_busy], 0
-    jmp .need_data
-.thread_ok:
-    mov rcx, rax
-    call CloseHandle
-    xor eax, eax
-    jmp .return
-.do_recalc:
-    cmp dword ptr [rip + analysis_ready], 1
-    jne .need_data
+    test rax,rax
+    jz .dp_thread_error
+    mov [rip+h_worker],rax
+    jmp .dp_true
+.dp_thread_error:
+    mov dword ptr [rip+analysis_busy],0
+    xor ecx,ecx
+    call SetBusyControls
+    lea rcx,[rip+text_thread]
+    call Alert
+    jmp .dp_true
+.dp_need:
+    lea rcx,[rip+text_need]
+    call Alert
+    jmp .dp_true
+.dp_generate:
     call SampleCandidate
+    test eax,eax
+    jz .dp_rng
+    mov dword ptr [rip+session_count],1
+    mov rax,[rip+selected_mask]
+    mov [rip+session_masks],rax
+    jmp .dp_update
+.dp_five: mov ecx,5; jmp .dp_multiple
+.dp_ten: mov ecx,10
+.dp_multiple:
+    call GenerateTickets
+    test eax,eax
+    jz .dp_rng
+.dp_update:
     call UpdateResultUI
-    xor eax, eax
-    jmp .return
-.busy_msg:
-    mov rcx, qword ptr [rip + h_status]
-    lea rdx, [rip + ui_status_busy]
-    call SetWindowTextA
-    xor eax, eax
-    jmp .return
-.need_data:
-    mov rcx, qword ptr [rip + h_status]
-    lea rdx, [rip + ui_status_needdata]
-    call SetWindowTextA
-    xor eax, eax
-    jmp .return
-.analysis_done:
-    mov dword ptr [rip + analysis_busy], 0
-    mov dword ptr [rip + analysis_ready], 1
-    mov rcx, qword ptr [rip + h_btn_load]
-    mov edx, 1
-    call EnableWindow
-    mov rcx, qword ptr [rip + h_btn_analyze]
-    mov edx, 1
-    call EnableWindow
-    mov rcx, qword ptr [rip + h_btn_recalc]
-    mov edx, 1
-    call EnableWindow
+    lea rcx,[rip+text_generated]
+    call Notify
+    jmp .dp_true
+.dp_rng:
+    lea rcx,[rip+text_rng]
+    call Alert
+    jmp .dp_true
+.dp_cancel:
+    mov dword ptr [rip+cancel_flag],1
+    jmp .dp_true
+.dp_copy:
+    call CopyTickets
+    test eax,eax
+    jz .dp_true
+    lea rcx,[rip+text_copied]
+    call Notify
+    jmp .dp_true
+.dp_save:
+    cmp dword ptr [rip+session_count],0
+    je .dp_true
+    mov ecx,1
+    call DialogFile
+    test eax,eax
+    jz .dp_true
+    # UTF-16LE BOM + text; every Windows text editor reads the result correctly.
+    mov word ptr [rip+ui_status],0xfeff
+    lea rcx,[rip+ui_status+2]
+    lea rdx,[rip+ui_tickets]
+    call lstrcpyW
+    lea rcx,[rip+ui_status]
+    call lstrlenW
+    lea r8d,[rax*2]
+    lea rcx,[rip+file_path]
+    lea rdx,[rip+ui_status]
+    call WriteBytes
+    jmp .dp_saved
+.dp_report:
+    cmp dword ptr [rip+field_ready],1
+    jne .dp_report_need
+    mov ecx,2
+    call DialogFile
+    test eax,eax
+    jz .dp_true
+    call BuildReport
+    test eax,eax
+    jz .dp_save_error
+    mov r8d,eax
+    lea rcx,[rip+file_path]
+    lea rdx,[rip+report_buffer]
+    call WriteBytes
+.dp_saved:
+    test eax,eax
+    jz .dp_save_error
+    lea rcx,[rip+text_saved]
+    call Notify
+    jmp .dp_true
+.dp_save_error:
+    lea rcx,[rip+text_savefail]
+    call Alert
+    jmp .dp_true
+.dp_details:
+    cmp dword ptr [rip+field_ready],1
+    jne .dp_report_need
+    call BuildReport
+    test eax,eax
+    jz .dp_save_error
+    mov r8d,eax
+    lea rcx,[rip+report_path]
+    lea rdx,[rip+report_buffer]
+    call WriteBytes
+    test eax,eax
+    jz .dp_save_error
+    lea rcx,[rip+report_path]
+    call OpenPath
+    jmp .dp_true
+.dp_report_need:
+    lea rcx,[rip+text_report_need]
+    call Alert
+    jmp .dp_true
+.dp_folder:
+    lea rcx,[rip+folder_path]
+    call OpenPath
+    jmp .dp_true
+.dp_uniform:
+    mov dword ptr [rip+field_ready],0
+    movsd xmm0,[rip+one]
+    movsd [rip+rho],xmm0
     call UpdateResultUI
-    mov rcx, qword ptr [rip + h_status]
-    lea rdx, [rip + ui_status_done]
-    call SetWindowTextA
-    xor eax, eax
-    jmp .return
-.destroy:
-    mov rcx, qword ptr [rip + h_font_title]
-    test rcx, rcx
+    lea rcx,[rip+text_uniform]
+    call Notify
+    jmp .dp_true
+.dp_seal:
+    call SealPick
+    test eax,eax
+    jz .dp_seal_error
+    mov esi,eax
+    mov rax,[rip+selected_mask]
+    mov [rip+session_masks],rax
+    mov dword ptr [rip+session_count],1
+    call UpdateResultUI
+    lea rcx,[rip+text_sealed]
+    cmp esi,2
+    jne 1f
+    lea rcx,[rip+text_seal_existing]
+1:  call Alert
+    jmp .dp_true
+.dp_seal_error:
+    lea rcx,[rip+text_seal_fail]
+    call Alert
+    jmp .dp_true
+.dp_about:
+    mov rcx,[rip+h_instance]
+    mov edx,300
+    mov r8,rbx
+    lea r9,[rip+AboutProc]
+    mov qword ptr [rsp+32],0
+    call DialogBoxParamW
+    jmp .dp_true
+.dp_releases:
+    lea rcx,[rip+releases_url]
+    call OpenPath
+    jmp .dp_true
+.dp_manual:
+    lea rcx,[rip+manual_url]
+    call OpenPath
+    jmp .dp_true
+.dp_timer:
+    cmp dword ptr [rip+smoke_mode],1
+    jne 1f
+    inc dword ptr [rip+smoke_ticks]
+    cmp dword ptr [rip+smoke_ticks],20
+    jae .dp_close
+1:  cmp dword ptr [rip+analysis_busy],1
+    jne .dp_true
+    mov eax,[rip+validation_count]
+    mov [rsp+32],rax
+    mov eax,[rip+history_count]
+    sub eax,60
+    mov [rsp+40],rax
+    lea rcx,[rip+ui_status]
+    lea rdx,[rip+fmt_busy]
+    mov r8d,[rip+analysis_stage]
+    mov r9d,[rip+progress]
+    call wsprintfW
+    lea rcx,[rip+ui_status]
+    call Notify
+    mov rcx,rbx
+    mov edx,1106
+    call GetDlgItem
+    mov rcx,rax
+    mov edx,0x402
+    mov r8d,[rip+progress]
+    xor r9d,r9d
+    call SendMessageW
+    jmp .dp_true
+.dp_done:
+    mov rcx,[rip+h_worker]
+    mov edx,-1
+    call WaitForSingleObject
+    mov rcx,[rip+h_worker]
+    call CloseHandle
+    mov qword ptr [rip+h_worker],0
+    mov dword ptr [rip+analysis_busy],0
+    xor ecx,ecx
+    call SetBusyControls
+    cmp dword ptr [rip+close_after],1
+    je .dp_close
+    cmp dword ptr [rip+worker_result],1
+    jne .dp_canceled
+    call UpdateResultUI
+    lea rcx,[rip+text_done]
+    call Notify
+    jmp .dp_true
+.dp_canceled:
+    call UpdateResultUI
+    lea rcx,[rip+text_cancel]
+    cmp dword ptr [rip+cancel_flag],1
+    je 1f
+    lea rcx,[rip+text_analysis_fail]
+1:
+    call Notify
+    jmp .dp_true
+.dp_close:
+    cmp dword ptr [rip+analysis_busy],1
+    jne .dp_destroy
+    mov dword ptr [rip+cancel_flag],1
+    mov dword ptr [rip+close_after],1
+    jmp .dp_true
+.dp_destroy:
+    mov rcx,rbx
+    mov edx,1
+    call KillTimer
+    mov rcx,[rip+h_title_font]
+    call DeleteObject
+    mov rcx,[rip+h_result_font]
+    call DeleteObject
+    mov rcx,rbx
+    xor edx,edx
+    call EndDialog
+.dp_true: mov eax,1
+.dp_out: END 128
+
+FN AboutProc
+    cmp edx,0x111
+    je 1f
+    cmp edx,0x10
+    jne 2f
+1:  mov edx,1
+    call EndDialog
+    mov eax,1
+    jmp 3f
+2:  xor eax,eax
+3:  END
+FN AnalysisThread
+    call GetTickCount64
+    mov rbx,rax
+    call AnalyzeOracle
+    mov ebp,eax
+    call GetTickCount64
+    sub rax,rbx
+    mov [rip+elapsed_ms],rax
+    test ebp,ebp
     jz 1f
-    call DeleteObject
-1:  mov rcx, qword ptr [rip + h_font_result]
-    test rcx, rcx
-    jz 2f
-    call DeleteObject
-2:  mov rcx, qword ptr [rip + h_font_ui]
-    test rcx, rcx
-    jz 3f
-    call DeleteObject
-3:  xor ecx, ecx
-    call PostQuitMessage
-    xor eax, eax
-.return:
-    add rsp, 40
-    pop rbx
-    leave
-    ret
+    call SampleCandidate
+    mov ebp,eax
+    test eax,eax
+    jz 1f
+    mov dword ptr [rip+session_count],1
+    mov rax,[rip+selected_mask]
+    mov [rip+session_masks],rax
+1:  mov [rip+worker_result],ebp
+    mov rcx,[rip+h_main]
+    mov edx,0x8001
+    xor r8d,r8d
+    xor r9d,r9d
+    call PostMessageW
+    xor eax,eax
+    END

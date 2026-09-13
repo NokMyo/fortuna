@@ -1,495 +1,401 @@
-# ---------------------------------------------------------------------------
-# CSV loader and parser
-# Accepted rows:
-#   round,n1,n2,n3,n4,n5,n6[,bonus]
-# or round,date,n1,n2,n3,n4,n5,n6[,bonus]
-# Header rows are ignored.
-# ---------------------------------------------------------------------------
-ChooseAndLoadCsv:
-    push rbp
-    mov rbp, rsp
-    sub rsp, 32
-    lea rdi, [rip + ofn_buf]
-    xor eax, eax
-    mov ecx, 19
-    rep stosq
-    lea rdi, [rip + file_path]
-    mov byte ptr [rdi], 0
-    lea rax, [rip + ofn_buf]
-    mov dword ptr [rax + 0], 152
-    mov rcx, qword ptr [rip + h_main]
-    mov qword ptr [rax + 8], rcx
-    lea rcx, [rip + filter_csv]
-    mov qword ptr [rax + 24], rcx
-    mov dword ptr [rax + 44], 1
-    lea rcx, [rip + file_path]
-    mov qword ptr [rax + 48], rcx
-    mov dword ptr [rax + 56], 520
-    lea rcx, [rip + open_title]
-    mov qword ptr [rax + 88], rcx
-    mov dword ptr [rax + 96], OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_EXPLORER
-    lea rcx, [rip + ofn_buf]
-    call GetOpenFileNameA
-    test eax, eax
-    jz .done
-    mov rcx, qword ptr [rip + h_status]
-    lea rdx, [rip + ui_status_loading]
-    call SetWindowTextA
-    lea rcx, [rip + file_path]
-    call LoadCsvFile
-    test eax, eax
-    jz .error
-    lea rcx, [rip + status_buf]
-    lea rdx, [rip + ui_status_loaded]
-    mov r8d, dword ptr [rip + draw_count]
-    call wsprintfA
-    mov rcx, qword ptr [rip + h_status]
-    lea rdx, [rip + status_buf]
-    call SetWindowTextA
-    mov rcx, qword ptr [rip + h_btn_recalc]
-    xor edx, edx
-    call EnableWindow
-    mov dword ptr [rip + analysis_ready], 0
-    jmp .done
-.error:
-    mov rcx, qword ptr [rip + h_status]
-    lea rdx, [rip + ui_status_error]
-    call SetWindowTextA
-.done:
-    leave
-    ret
-
-# rcx=path, returns eax=1 success
-LoadCsvFile:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push rsi
-    push rdi
-    sub rsp, 72
-    mov rbx, rcx
-    mov rcx, rbx
-    mov edx, GENERIC_READ
-    mov r8d, FILE_SHARE_READ
-    xor r9d, r9d
-    mov qword ptr [rsp + 32], OPEN_EXISTING
-    mov qword ptr [rsp + 40], FILE_ATTRIBUTE_NORMAL
-    mov qword ptr [rsp + 48], 0
-    call CreateFileA
-    cmp rax, INVALID_HANDLE_VALUE
-    je .fail
-    mov rsi, rax
-    mov rcx, rsi
-    lea rdx, [rip + file_size_q]
-    call GetFileSizeEx
-    test eax, eax
-    jz .close_fail
-    mov rax, qword ptr [rip + file_size_q]
-    test rax, rax
-    jz .close_fail
-    cmp rax, 16777216
-    ja .close_fail
-    inc rax
-    mov rdi, rax
-    call GetProcessHeap
-    mov rcx, rax
-    mov edx, HEAP_ZERO_MEMORY
-    mov r8, rdi
-    call HeapAlloc
-    test rax, rax
-    jz .close_fail
-    mov rbx, rax
-    mov rcx, rsi
-    mov rdx, rbx
-    mov r8d, dword ptr [rip + file_size_q]
-    lea r9, [rip + bytes_read]
-    mov qword ptr [rsp + 32], 0
-    call ReadFile
-    test eax, eax
-    jz .free_fail
-    mov eax, dword ptr [rip + bytes_read]
-    mov byte ptr [rbx + rax], 0
-    mov rcx, rbx
-    mov edx, eax
-    call ParseCsv
-    mov edi, eax
-    call GetProcessHeap
-    mov rcx, rax
-    xor edx, edx
-    mov r8, rbx
-    call HeapFree
-    mov rcx, rsi
-    call CloseHandle
-    mov eax, edi
-    jmp .out
-.free_fail:
-    call GetProcessHeap
-    mov rcx, rax
-    xor edx, edx
-    mov r8, rbx
-    call HeapFree
-.close_fail:
-    mov rcx, rsi
-    call CloseHandle
-.fail:
-    xor eax, eax
-.out:
-    add rsp, 72
-    pop rdi
-    pop rsi
-    pop rbx
-    leave
-    ret
-
-ResetStats:
-    push rdi
-    xor eax, eax
-    lea rdi, [rip + freq_total]
-    mov ecx, 83628
-    rep stosb
-    mov dword ptr [rip + draw_count], 0
-    mov dword ptr [rip + recent_pos], 0
-    mov dword ptr [rip + final_count], 0
-    mov dword ptr [rip + fast_count], 0
-    mov dword ptr [rip + analysis_ready], 0
-    pop rdi
-    ret
-
-# rcx=buffer rdx=len -> eax=1 if >=1 valid draw
-ParseCsv:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push rsi
-    push rdi
-    push r12
-    push r13
-    sub rsp, 40
-    mov rbx, rcx
-    mov r12, rdx
-    call ResetStats
-    xor rsi, rsi
-.line_loop:
-    cmp rsi, r12
-    jae .finish
-.skip_eol:
-    cmp rsi, r12
-    jae .finish
-    mov al, byte ptr [rbx + rsi]
-    cmp al, 13
-    je .skip_one
-    cmp al, 10
-    jne .parse_line
-.skip_one:
+# Strict transactional CSV. No silently skipped malformed rows.
+# record: round:u32,date:YYYYMMDD,u32 numbers[6],bonus:u32,reserved:u32,mask:u64.
+# Returns 1; on failure history and active field are untouched. parse_error and
+# parse_line describe rejected input. Explicit contiguous round history required.
+FN ParseCsv,96
+    mov rbx,rcx
+    mov r12,rdx
+    xor esi,esi
+    mov dword ptr [rip+parse_error],0
+    mov dword ptr [rip+parse_line],0
+    mov dword ptr [rip+staging_count],0
+    cmp r12,3
+    jb .csv_line
+    cmp byte ptr [rbx],0xef
+    jne .csv_line
+    cmp byte ptr [rbx+1],0xbb
+    jne .csv_line
+    cmp byte ptr [rbx+2],0xbf
+    jne .csv_line
+    mov esi,3
+.csv_line:
+    cmp rsi,r12
+    jae .csv_finish
+    inc dword ptr [rip+parse_line]
+    # Empty lines are permitted; a header is permitted only on physical line 1.
+    mov al,[rbx+rsi]
+    cmp al,13
+    je .csv_eol
+    cmp al,10
+    je .csv_eol
+    cmp dword ptr [rip+parse_line],1
+    jne .csv_fields_start
+    cmp al,'r'
+    je .csv_header
+    cmp al,'R'
+    je .csv_header
+    jmp .csv_fields_start
+.csv_header:
+    # Header must begin with literal round (case of R accepted).
+    lea rax,[rsi+5]
+    cmp rax,r12
+    jae .csv_bad_format
+    cmp byte ptr [rbx+rsi+1],'o'
+    jne .csv_bad_format
+    cmp byte ptr [rbx+rsi+2],'u'
+    jne .csv_bad_format
+    cmp byte ptr [rbx+rsi+3],'n'
+    jne .csv_bad_format
+    cmp byte ptr [rbx+rsi+4],'d'
+    jne .csv_bad_format
+    cmp byte ptr [rbx+rsi+5],','
+    jne .csv_bad_format
+1:  cmp rsi,r12
+    jae .csv_finish
+    mov al,[rbx+rsi]
+    cmp al,10
+    je .csv_eol
     inc rsi
-    jmp .skip_eol
-.parse_line:
-    lea rdi, [rip + columns]
-    xor eax, eax
-    mov ecx, 12
-    rep stosd
-    xor r13d, r13d
-.col_loop:
-    cmp r13d, 12
-    jae .skip_to_eol
-    xor r8d, r8d
-    xor r9d, r9d
-.scan_col:
-    cmp rsi, r12
-    jae .store_col_end
-    mov al, byte ptr [rbx + rsi]
-    cmp al, ','
-    je .store_col_comma
-    cmp al, 13
-    je .store_col_end
-    cmp al, 10
-    je .store_col_end
-    cmp al, '0'
-    jb .advance_char
-    cmp al, '9'
-    ja .advance_char
-    test r9d, r9d
-    jnz .acc_digit
-    mov r9d, 1
-.acc_digit:
-    imul r8d, r8d, 10
-    movzx eax, al
-    sub eax, '0'
-    add r8d, eax
-.advance_char:
+    jmp 1b
+.csv_fields_start:
+    xor r13d,r13d
+    lea rcx,[rip+csv_columns]
+    mov edx,80
+    call Zero
+    lea rcx,[rip+csv_colflags]
+    mov edx,40
+    call Zero
+.csv_field:
+    cmp r13d,9
+    jae .csv_bad_format
+    xor r14d,r14d
+    xor r15d,r15d
+    xor ebp,ebp
+    mov dword ptr [rsp+32],0
+    mov dword ptr [rsp+36],0
+.csv_leading:
+    cmp rsi,r12
+    jae .csv_bad_format
+    mov al,[rbx+rsi]
+    cmp al,' '
+    je 1f
+    cmp al,9
+    jne 2f
+1:  inc rsi
+    jmp .csv_leading
+2:  cmp al,'"'
+    jne .csv_digit
+    mov ebp,1
     inc rsi
-    jmp .scan_col
-.store_col_comma:
-    lea rax, [rip + columns]
-    mov dword ptr [rax + r13*4], r8d
+.csv_digit:
+    cmp rsi,r12
+    jae .csv_end_field
+    movzx eax,byte ptr [rbx+rsi]
+    cmp eax,'0'
+    jb .csv_other
+    cmp eax,'9'
+    ja .csv_other
+    cmp r15d,8
+    jae .csv_bad_format
+    imul r14,r14,10
+    sub eax,'0'
+    add r14,rax
+    inc r15d
+    inc rsi
+    jmp .csv_digit
+.csv_other:
+    cmp al,'-'
+    jne .csv_end_field
+    cmp r13d,1
+    jne .csv_bad_format
+    cmp r15d,4
+    je 1f
+    cmp r15d,6
+    jne .csv_bad_format
+    cmp dword ptr [rsp+32],1
+    jne .csv_bad_format
+    jmp 2f
+1:  cmp dword ptr [rsp+32],0
+    jne .csv_bad_format
+2:  inc dword ptr [rsp+32]
+    inc rsi
+    jmp .csv_digit
+.csv_end_field:
+    test r15d,r15d
+    jz .csv_bad_format
+    test ebp,ebp
+    jz .csv_trailing
+    cmp rsi,r12
+    jae .csv_bad_format
+    cmp byte ptr [rbx+rsi],'"'
+    jne .csv_bad_format
+    inc rsi
+.csv_trailing:
+    cmp rsi,r12
+    jae .csv_store
+    mov al,[rbx+rsi]
+    cmp al,' '
+    je 1f
+    cmp al,9
+    jne .csv_store
+1:  inc rsi
+    jmp .csv_trailing
+.csv_store:
+    cmp dword ptr [rsp+32],0
+    je 1f
+    cmp dword ptr [rsp+32],2
+    jne .csv_bad_format
+    cmp r15d,8
+    jne .csv_bad_format
+1:  lea rax,[rip+csv_columns]
+    mov [rax+r13*8],r14
+    lea rax,[rip+csv_colflags]
+    mov edx,[rsp+32]
+    mov [rax+r13*4],edx
     inc r13d
+    cmp rsi,r12
+    jae .csv_evaluate
+    mov al,[rbx+rsi]
+    cmp al,13
+    je .csv_evaluate
+    cmp al,10
+    je .csv_evaluate
+    cmp al,','
+    jne .csv_bad_format
     inc rsi
-    jmp .col_loop
-.store_col_end:
-    lea rax, [rip + columns]
-    mov dword ptr [rax + r13*4], r8d
-    inc r13d
-    jmp .evaluate_line
-.skip_to_eol:
-    cmp rsi, r12
-    jae .evaluate_line
-    mov al, byte ptr [rbx + rsi]
-    cmp al, 10
-    je .evaluate_line
-    inc rsi
-    jmp .skip_to_eol
-.evaluate_line:
-    cmp dword ptr [rip + columns], 1
-    jb .line_advance
-    mov r10d, 1
-    lea rcx, [rip + columns]
-    call ValidateSixAt
-    test eax, eax
-    jnz .valid_row
-    mov r10d, 2
-    lea rcx, [rip + columns]
-    call ValidateSixAt
-    test eax, eax
-    jz .line_advance
-.valid_row:
-    lea rax, [rip + columns]
-    lea rdi, [rip + work_nums]
-    xor ecx, ecx
-.copy6:
-    mov edx, dword ptr [rax + r10*4]
-    mov dword ptr [rdi + rcx*4], edx
-    inc r10d
-    inc ecx
-    cmp ecx, 6
-    jb .copy6
-    lea rcx, [rip + work_nums]
-    call SortSix
-    lea rcx, [rip + work_nums]
-    call ValidateUniqueSix
-    test eax, eax
-    jz .line_advance
-    lea rcx, [rip + work_nums]
-    call ProcessDraw
-.line_advance:
-    cmp rsi, r12
-    jae .finish
-    mov al, byte ptr [rbx + rsi]
-    cmp al, 13
+    jmp .csv_field
+.csv_evaluate:
+    cmp r13d,7
+    jb .csv_bad_format
+    lea rdi,[rip+csv_columns]
+    mov rax,[rdi]
+    cmp eax,1
+    jb .csv_bad_format
+    cmp eax,1000000
+    ja .csv_bad_format
+    mov edx,[rip+staging_count]
+    cmp edx,MAX_DRAWS
+    jae .csv_too_large
+    imul edx,edx,RECORD_SIZE
+    lea rbp,[rip+staging]
+    add rbp,rdx
+    mov [rbp],eax
+    mov dword ptr [rbp+4],0
+    mov dword ptr [rbp+32],0
+    mov dword ptr [rbp+36],0
+    mov r14d,1
+    cmp qword ptr [rdi+8],10000000
+    jb .csv_no_date
+    mov ecx,[rdi+8]
+    call ValidateDate
+    test eax,eax
+    jz .csv_bad_date
+    mov eax,[rdi+8]
+    mov [rbp+4],eax
+    inc r14d
+.csv_no_date:
+    lea eax,[r14+6]
+    cmp r13d,eax
+    jb .csv_bad_format
+    inc eax
+    cmp r13d,eax
+    ja .csv_bad_format
+    xor r15d,r15d
+    xor r11d,r11d
+.csv_six:
+    mov eax,[rdi+r14*8]
+    cmp eax,1
+    jb .csv_bad_number
+    cmp eax,45
+    ja .csv_bad_number
+    lea ecx,[rax-1]
+    bt r11,rcx
+    jc .csv_bad_number
+    bts r11,rcx
+    inc r14d
+    inc r15d
+    cmp r15d,6
+    jb .csv_six
+    mov [rbp+40],r11
+    cmp r13d,r14d
+    je .csv_bonus_done
+    mov eax,[rdi+r14*8]
+    cmp eax,1
+    jb .csv_bad_number
+    cmp eax,45
+    ja .csv_bad_number
+    lea ecx,[rax-1]
+    bt r11,rcx
+    jc .csv_bad_number
+    mov [rbp+32],eax
+.csv_bonus_done:
+    mov rcx,r11
+    lea rdx,[rbp+8]
+    call MaskToNumbers
+    inc dword ptr [rip+staging_count]
+.csv_eol:
+    cmp rsi,r12
+    jae .csv_finish
+    cmp byte ptr [rbx+rsi],13
     jne 1f
     inc rsi
-1:  cmp rsi, r12
-    jae .finish
-    mov al, byte ptr [rbx + rsi]
-    cmp al, 10
-    jne .line_loop
+1:  cmp rsi,r12
+    jae .csv_finish
+    cmp byte ptr [rbx+rsi],10
+    jne .csv_line
     inc rsi
-    jmp .line_loop
-.finish:
-    cmp dword ptr [rip + draw_count], 0
-    setne al
-    movzx eax, al
-    add rsp, 40
-    pop r13
-    pop r12
-    pop rdi
-    pop rsi
-    pop rbx
-    leave
-    ret
-
-ValidateSixAt:
-    xor eax, eax
-    xor r11d, r11d
-.vloop:
-    mov edx, r10d
-    add edx, r11d
-    mov edx, dword ptr [rcx + rdx*4]
-    cmp edx, 1
-    jb .bad
-    cmp edx, 45
-    ja .bad
-    inc r11d
-    cmp r11d, 6
-    jb .vloop
-    mov eax, 1
-.bad:
-    ret
-
-SortSix:
-    push rbx
-    mov rbx, rcx
-    mov r8d, 1
-.outer_sort:
-    cmp r8d, 6
-    jae .sort_done
-    mov eax, dword ptr [rbx + r8*4]
-    mov r9d, r8d
-.inner_sort:
-    test r9d, r9d
-    jz .place_sort
-    mov edx, dword ptr [rbx + r9*4 - 4]
-    cmp edx, eax
-    jle .place_sort
-    mov dword ptr [rbx + r9*4], edx
-    dec r9d
-    jmp .inner_sort
-.place_sort:
-    mov dword ptr [rbx + r9*4], eax
-    inc r8d
-    jmp .outer_sort
-.sort_done:
-    pop rbx
-    ret
-
-ValidateUniqueSix:
-    mov eax, 1
-    mov r8d, 1
-.uq:
-    mov edx, dword ptr [rcx + r8*4]
-    cmp edx, dword ptr [rcx + r8*4 - 4]
-    je .dup
-    inc r8d
-    cmp r8d, 6
-    jb .uq
-    ret
-.dup:
-    xor eax, eax
-    ret
-
-# rcx -> six sorted dwords
-ProcessDraw:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push rsi
-    push rdi
-    push r12
-    sub rsp, 32
-    mov rbx, rcx
-    mov eax, dword ptr [rip + draw_count]
-    inc eax
-    mov dword ptr [rip + draw_count], eax
-    mov r12d, eax
-
-    xor esi, esi
-.decay_loop:
-    lea rdi, [rip + freq_short]
-    mov eax, dword ptr [rdi + rsi*4]
-    imul rax, SHORT_DECAY_Q16
-    shr rax, 16
-    mov dword ptr [rdi + rsi*4], eax
-    lea rdi, [rip + freq_mid]
-    mov eax, dword ptr [rdi + rsi*4]
-    imul rax, MID_DECAY_Q16
-    shr rax, 16
-    mov dword ptr [rdi + rsi*4], eax
-    lea rdi, [rip + freq_long]
-    mov eax, dword ptr [rdi + rsi*4]
-    imul rax, LONG_DECAY_Q16
-    shr rax, 16
-    mov dword ptr [rdi + rsi*4], eax
+    jmp .csv_line
+.csv_finish:
+    cmp dword ptr [rip+staging_count],1
+    jb .csv_bad_format
+    # Canonical insertion sort: row order in files never changes the analysis.
+    mov esi,1
+    lea rbx,[rip+staging]
+.csv_sort:
+    cmp esi,[rip+staging_count]
+    jae .csv_order_check
+    imul eax,esi,RECORD_SIZE
+    lea rdx,[rbx+rax]
+    lea rcx,[rsp+48]
+    mov r8d,RECORD_SIZE
+    call Copy
+    mov edi,esi
+1:  test edi,edi
+    jz 2f
+    imul eax,edi,RECORD_SIZE
+    mov ecx,[rsp+48]
+    cmp [rbx+rax-RECORD_SIZE],ecx
+    jbe 2f
+    lea rcx,[rbx+rax]
+    lea rdx,[rcx-RECORD_SIZE]
+    mov r8d,RECORD_SIZE
+    call Copy
+    dec edi
+    jmp 1b
+2:  imul eax,edi,RECORD_SIZE
+    lea rcx,[rbx+rax]
+    lea rdx,[rsp+48]
+    mov r8d,RECORD_SIZE
+    call Copy
     inc esi
-    cmp esi, 45
-    jb .decay_loop
-
-    xor r11, r11
-    xor esi, esi
-    xor r8d, r8d
-    xor r9d, r9d
-    xor r10d, r10d
-.num_update:
-    mov eax, dword ptr [rbx + rsi*4]
-    add r8d, eax
-    test eax, 1
-    jz 1f
-    inc r9d
-1:  cmp eax, 22
-    ja 2f
-    inc r10d
-2:  dec eax
-    lea rdi, [rip + freq_total]
-    inc dword ptr [rdi + rax*4]
-    lea rdi, [rip + freq_short]
-    add dword ptr [rdi + rax*4], SHORT_ADD_Q16
-    lea rdi, [rip + freq_mid]
-    add dword ptr [rdi + rax*4], MID_ADD_Q16
-    lea rdi, [rip + freq_long]
-    add dword ptr [rdi + rax*4], LONG_ADD_Q16
-    lea rdi, [rip + last_seen]
-    mov dword ptr [rdi + rax*4], r12d
-    mov ecx, eax
-    mov rdx, 1
-    shl rdx, cl
-    or r11, rdx
-    inc esi
-    cmp esi, 6
-    jb .num_update
-
-    xor esi, esi
-.pair_i:
-    mov eax, dword ptr [rbx + rsi*4]
-    dec eax
-    mov edi, eax
-    inc esi
-    mov ecx, esi
-.pair_j:
-    cmp ecx, 6
-    jae .pair_next_i
-    mov eax, dword ptr [rbx + rcx*4]
-    dec eax
-    imul edx, edi, 45
-    add edx, eax
-    lea rax, [rip + pair_counts]
-    inc dword ptr [rax + rdx*4]
+    jmp .csv_sort
+.csv_order_check:
+    mov esi,1
+1:  cmp esi,[rip+staging_count]
+    jae .csv_commit
+    imul eax,esi,RECORD_SIZE
+    mov ecx,[rbx+rax-RECORD_SIZE]
     inc ecx
-    jmp .pair_j
-.pair_next_i:
-    cmp esi, 5
-    jb .pair_i
-
-    mov eax, r8d
-    cdqe
-    add qword ptr [rip + sum_acc], rax
-    imul rax, rax
-    add qword ptr [rip + sum_sq_acc], rax
-    mov eax, dword ptr [rbx + 20]
-    sub eax, dword ptr [rbx]
-    mov ecx, eax
-    cdqe
-    add qword ptr [rip + range_acc], rax
-    movsxd rax, ecx
-    imul rax, rax
-    add qword ptr [rip + range_sq_acc], rax
-    lea rax, [rip + hist_odd]
-    inc dword ptr [rax + r9*4]
-    lea rax, [rip + hist_low]
-    inc dword ptr [rax + r10*4]
-    xor esi, esi
-    xor ecx, ecx
-.adj_loop:
-    cmp esi, 5
-    jae .adj_done
-    mov eax, dword ptr [rbx + rsi*4 + 4]
-    sub eax, dword ptr [rbx + rsi*4]
-    cmp eax, 1
-    jne 3f
-    inc ecx
+    cmp [rbx+rax],ecx
+    jne .csv_bad_order
+    mov ecx,[rbx+rax-RECORD_SIZE+4]
+    mov edx,[rbx+rax+4]
+    test ecx,ecx
+    jz 2f
+    test edx,edx
+    jz .csv_bad_date
+    cmp edx,ecx
+    jbe .csv_bad_date
+    jmp 3f
+2:  test edx,edx
+    jnz .csv_bad_date
 3:  inc esi
-    jmp .adj_loop
-.adj_done:
-    lea rax, [rip + hist_adj]
-    inc dword ptr [rax + rcx*4]
+    jmp 1b
+.csv_commit:
+    lea rcx,[rip+history]
+    lea rdx,[rip+staging]
+    mov r8d,[rip+staging_count]
+    imul r8d,r8d,RECORD_SIZE
+    call Copy
+    mov eax,[rip+staging_count]
+    mov [rip+history_count],eax
+    dec eax
+    imul eax,eax,RECORD_SIZE
+    mov ecx,[rbx+rax]
+    mov [rip+last_round],ecx
+    mov dword ptr [rip+model_ready],0
+    mov dword ptr [rip+field_ready],0
+    mov dword ptr [rip+field_count],0
+    mov dword ptr [rip+session_count],0
+    mov qword ptr [rip+selected_mask],0
+    mov dword ptr [rip+selected_index],0
+    mov dword ptr [rip+validation_complete],0
+    mov dword ptr [rip+validation_count],0
+    mov dword ptr [rip+model_ready],0
+    movsd xmm0,[rip+one]
+    movsd [rip+rho],xmm0
+    lea rcx,[rip+history]
+    mov edx,[rip+history_count]
+    imul edx,edx,RECORD_SIZE
+    lea r8,[rip+hash_dataset]
+    call Sha256
+    mov ecx,[rip+history_count]
+    call RebuildStats
+    mov eax,1
+    jmp .csv_out
+.csv_bad_format: mov eax,1; jmp .csv_fail
+.csv_bad_number: mov eax,2; jmp .csv_fail
+.csv_bad_order: mov eax,3; jmp .csv_fail
+.csv_bad_date: mov eax,4; jmp .csv_fail
+.csv_too_large: mov eax,5
+.csv_fail:
+    mov [rip+parse_error],eax
+    xor eax,eax
+.csv_out:
+    END 96
 
-    mov eax, dword ptr [rip + recent_pos]
-    and eax, 63
-    lea rdx, [rip + recent_masks]
-    mov qword ptr [rdx + rax*8], r11
-    inc dword ptr [rip + recent_pos]
-
-    add rsp, 32
-    pop r12
-    pop rdi
-    pop rsi
-    pop rbx
-    leave
-    ret
+# YYYYMMDD, Gregorian leap-year validation, 2002..9999.
+FN ValidateDate
+    mov eax,ecx
+    xor edx,edx
+    mov r8d,100
+    div r8d
+    mov r9d,edx
+    xor edx,edx
+    div r8d
+    mov r10d,edx
+    cmp eax,2002
+    jb .date_bad
+    cmp eax,9999
+    ja .date_bad
+    cmp r10d,1
+    jb .date_bad
+    cmp r10d,12
+    ja .date_bad
+    mov r11d,31
+    cmp r10d,2
+    je .date_feb
+    cmp r10d,4
+    je .date_30
+    cmp r10d,6
+    je .date_30
+    cmp r10d,9
+    je .date_30
+    cmp r10d,11
+    jne .date_day
+.date_30: mov r11d,30; jmp .date_day
+.date_feb:
+    mov r11d,28
+    test eax,3
+    jnz .date_day
+    mov ecx,eax
+    xor edx,edx
+    div r8d
+    test edx,edx
+    jnz .date_leap
+    mov eax,ecx
+    mov r8d,400
+    xor edx,edx
+    div r8d
+    test edx,edx
+    jnz .date_day
+.date_leap: inc r11d
+.date_day:
+    cmp r9d,1
+    jb .date_bad
+    cmp r9d,r11d
+    ja .date_bad
+    mov eax,1
+    jmp .date_out
+.date_bad: xor eax,eax
+.date_out: END

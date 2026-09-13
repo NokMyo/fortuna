@@ -1,266 +1,389 @@
-# ---------------------------------------------------------------------------
-# Sampling and presentation
-# ---------------------------------------------------------------------------
-SampleCandidate:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push rsi
-    sub rsp, 48
-    cmp dword ptr [rip + final_count], 0
-    je .sample_out
+.section .rdata,"dr"
+thermal_low: .double 0.02
+thermal_high: .double 64.0
+entropy_target: .double 0.90
+geometry_weight: .double 0.05
+crowd_weight: .double 0.10
+.section .bss
+field_energies: .skip TOP_FINAL*8
+field_z: .skip TOP_FINAL*8
+field_entropy: .skip 8
+field_max: .skip 8
+field_sum: .skip 8
+field_center: .skip 8
+field_scale: .skip 8
+field_hash_data: .skip 8448
+mixture_marginals: .skip 45*8
+challenger_marginals: .skip 45*8
+.section .text
+FN BuildThermal,64
+    xor esi,esi
+.bt_energy:
+    lea rax,[rip+final_masks]
+    mov rcx,[rax+rsi*8]
+    call ComputeNormalized
+    lea rbx,[rip+norm_z]
+    imul eax,esi,MODEL_COUNT*8
+    lea rcx,[rip+final_raw]
+    add rcx,rax
+    mov rdx,rbx
+    mov r8d,MODEL_COUNT*8
+    call Copy
+    xor edi,edi
+    xorpd xmm0,xmm0
+    xorpd xmm4,xmm4
+    xorpd xmm5,xmm5
+    lea rdx,[rip+model_weights]
+1:  movsd xmm1,[rbx+rdi*8]
+    addsd xmm4,xmm1
+    addsd xmm5,[rdx+rdi*8]
+    movsd xmm1,[rbx+rdi*8]
+    mulsd xmm1,[rdx+rdi*8]
+    addsd xmm0,xmm1
+    inc edi
+    cmp edi,MODEL_COUNT-1
+    jb 1b
+    # Diagnostic challenger energy stays inspectable when evidence gates close.
+    comisd xmm5,[rip+zero]
+    jne 2f
+    movapd xmm0,xmm4
+    mov eax,MODEL_COUNT-1
+    cvtsi2sd xmm1,eax
+    divsd xmm0,xmm1
+2:  mulsd xmm0,[rip+evidence]
+    movsd xmm1,[rbx+88]
+    mulsd xmm1,[rip+crowd_weight]
+    addsd xmm0,xmm1
+    # Geometry has no independent evidence; it scales with the same budget.
+    imul eax,esi,32
+    lea rdx,[rip+geometry]
+    movsd xmm1,[rdx+rax]
+    addsd xmm1,[rdx+rax+8]
+    mulsd xmm1,[rip+geometry_weight]
+    mulsd xmm1,[rip+evidence]
+    addsd xmm0,xmm1
+    lea rdx,[rip+world_summary]
+    movsd xmm1,[rdx+rax]
+    addsd xmm1,[rdx+rax+16]
+    mulsd xmm1,[rip+half]
+    mulsd xmm1,[rip+evidence]
+    addsd xmm0,xmm1
+    lea rdx,[rip+field_energies]
+    movsd [rdx+rsi*8],xmm0
+    inc esi
+    cmp esi,[rip+field_count]
+    jb .bt_energy
+    lea rcx,[rip+field_energies]
+    mov edx,[rip+field_count]
+    call Median
+    movsd [rip+field_center],xmm0
+    lea rbx,[rip+field_energies]
+    lea rdi,[rip+world_temp]
+    xor esi,esi
+1:  movsd xmm1,[rbx+rsi*8]
+    subsd xmm1,xmm0
+    andpd xmm1,[rip+abs_bits]
+    movsd [rdi+rsi*8],xmm1
+    inc esi
+    cmp esi,[rip+field_count]
+    jb 1b
+    mov rcx,rdi
+    mov edx,[rip+field_count]
+    call Median
+    mulsd xmm0,[rip+mad_factor]
+    maxsd xmm0,[rip+epsilon]
+    movsd [rip+field_scale],xmm0
+    lea rdi,[rip+field_z]
+    xor esi,esi
+    movsd xmm5,[rip+neg_zlimit]
+1:  movsd xmm1,[rbx+rsi*8]
+    subsd xmm1,[rip+field_center]
+    divsd xmm1,xmm0
+    maxsd xmm1,[rip+neg_zlimit]
+    minsd xmm1,[rip+zlimit]
+    maxsd xmm5,xmm1
+    movsd [rdi+rsi*8],xmm1
+    inc esi
+    cmp esi,[rip+field_count]
+    jb 1b
+    movsd [rip+field_max],xmm5
+    cvtsi2sd xmm0,dword ptr [rip+field_count]
+    call Log
+    mulsd xmm0,[rip+entropy_target]
+    movsd [rsp+32],xmm0
+    movsd xmm0,[rip+thermal_low]
+    movsd [rsp+40],xmm0
+    movsd xmm0,[rip+thermal_high]
+    movsd [rsp+48],xmm0
+    mov ebp,24
+.bt_search:
+    movsd xmm0,[rsp+40]
+    addsd xmm0,[rsp+48]
+    mulsd xmm0,[rip+half]
+    movsd [rip+temperature],xmm0
+    call ThermalProbabilities
+    movsd xmm0,[rip+field_entropy]
+    comisd xmm0,[rsp+32]
+    jb 1f
+    movsd xmm0,[rip+temperature]
+    movsd [rsp+48],xmm0
+    jmp 2f
+1:  movsd xmm0,[rip+temperature]
+    movsd [rsp+40],xmm0
+2:  dec ebp
+    jnz .bt_search
+    call BuildMarginals
+    lea rcx,[rip+field_hash_data]
+    mov edx,8448
+    call Zero
+    lea rcx,[rip+field_hash_data]
+    lea rdx,[rip+final_masks]
+    mov r8d,TOP_FINAL*8
+    call Copy
+    lea rcx,[rip+field_hash_data+4096]
+    lea rdx,[rip+final_prob]
+    mov r8d,TOP_FINAL*8
+    call Copy
+    lea rcx,[rip+field_hash_data+8192]
+    lea rdx,[rip+hash_dataset]
+    mov r8d,32
+    call Copy
+    lea rcx,[rip+field_hash_data+8224]
+    lea rdx,[rip+hash_config]
+    mov r8d,32
+    call Copy
+    mov rax,[rip+rho]
+    mov [rip+field_hash_data+8256],rax
+    mov rax,[rip+temperature]
+    mov [rip+field_hash_data+8264],rax
+    lea rcx,[rip+field_hash_data+8272]
+    lea rdx,[rip+model_weights]
+    mov r8d,MODEL_COUNT*8
+    call Copy
+    lea rcx,[rip+field_hash_data]
+    mov edx,8448
+    lea r8,[rip+hash_field]
+    call Sha256
+    mov dword ptr [rip+field_ready],1
+    END 64
 
-    # Adaptive skepticism gate: some recalculations use a full uniform 6/45 draw.
-    lea rcx, [rsp + 32]
-    mov edx, 4
-    call SystemFunction036
-    test eax, eax
-    jz .oracle_sample
-    mov eax, dword ptr [rsp + 32]
-    xor edx, edx
-    mov ecx, 100
-    div ecx
-    cmp edx, dword ptr [rip + skepticism_pct]
-    jae .oracle_sample
+FN ThermalProbabilities,32
+    mov qword ptr [rsp+32],0
+    mov qword ptr [rsp+40],0
+    xor esi,esi
+    lea rbx,[rip+field_z]
+    lea rdi,[rip+final_prob]
+.tp_exp:
+    movsd xmm0,[rbx+rsi*8]
+    subsd xmm0,[rip+field_max]
+    divsd xmm0,[rip+temperature]
+    movsd [rsp+48],xmm0
+    call Exp
+    movsd [rdi+rsi*8],xmm0
+    movapd xmm1,xmm0
+    addsd xmm1,[rsp+32]
+    movsd [rsp+32],xmm1
+    mulsd xmm0,[rsp+48]
+    addsd xmm0,[rsp+40]
+    movsd [rsp+40],xmm0
+    inc esi
+    cmp esi,[rip+field_count]
+    jb .tp_exp
+    movsd xmm0,[rsp+32]
+    movsd [rip+field_sum],xmm0
+    call Log
+    movsd xmm1,[rsp+40]
+    divsd xmm1,[rsp+32]
+    subsd xmm0,xmm1
+    movsd [rip+field_entropy],xmm0
+    xor esi,esi
+    xorpd xmm5,xmm5
+    lea rbx,[rip+final_cdf]
+1:  movsd xmm0,[rdi+rsi*8]
+    divsd xmm0,[rsp+32]
+    movsd [rdi+rsi*8],xmm0
+    addsd xmm5,xmm0
+    movsd [rbx+rsi*8],xmm5
+    inc esi
+    cmp esi,[rip+field_count]
+    jb 1b
+    dec esi
+    movsd xmm0,[rip+one]
+    movsd [rbx+rsi*8],xmm0
+    END 32
+
+FN BuildMarginals
+    lea rcx,[rip+persistence]
+    mov edx,45*8
+    call Zero
+    lea rcx,[rip+challenger_marginals]
+    mov edx,45*8
+    call Zero
+    xor esi,esi
+    lea rbx,[rip+final_masks]
+    lea rdi,[rip+final_prob]
+    lea r12,[rip+persistence]
+    lea r13,[rip+challenger_marginals]
+1:  mov rax,[rbx+rsi*8]
+    movsd xmm0,[rdi+rsi*8]
+2:  bsf rcx,rax
+    btr rax,rcx
+    movsd xmm1,[r12+rcx*8]
+    addsd xmm1,[rip+one]
+    movsd [r12+rcx*8],xmm1
+    movsd xmm1,[r13+rcx*8]
+    addsd xmm1,xmm0
+    movsd [r13+rcx*8],xmm1
+    test rax,rax
+    jnz 2b
+    inc esi
+    cmp esi,[rip+field_count]
+    jb 1b
+    xor esi,esi
+    lea r14,[rip+mixture_marginals]
+    movsd xmm5,[rip+one]
+    subsd xmm5,[rip+rho]
+1:  movsd xmm0,[r12+rsi*8]
+    cvtsi2sd xmm1,dword ptr [rip+field_count]
+    divsd xmm0,xmm1
+    movsd [r12+rsi*8],xmm0
+    movsd xmm0,[r13+rsi*8]
+    mulsd xmm0,xmm5
+    movsd xmm1,[rip+rho]
+    mulsd xmm1,[rip+p_one]
+    addsd xmm0,xmm1
+    movsd [r14+rsi*8],xmm0
+    inc esi
+    cmp esi,45
+    jb 1b
+    END
+
+# Session returns zero on OS RNG failure. It never silently selects a fixed mask.
+FN SampleMask
+    cmp dword ptr [rip+field_ready],1
+    jne .sm_uniform
+    call RandomUnit
+    cmp dword ptr [rip+rng_error],0
+    jne .sm_fail
+    comisd xmm0,[rip+rho]
+    jb .sm_uniform
+    call RandomUnit
+    cmp dword ptr [rip+rng_error],0
+    jne .sm_fail
+    lea rdx,[rip+final_cdf]
+    xor ecx,ecx
+1:  comisd xmm0,[rdx+rcx*8]
+    jb 2f
+    inc ecx
+    cmp ecx,[rip+field_count]
+    jb 1b
+    dec ecx
+2:  lea rax,[rip+final_masks]
+    mov rax,[rax+rcx*8]
+    jmp .sm_out
+.sm_uniform:
     call GenerateUniformMask
-    mov qword ptr [rip + selected_mask], rax
-    mov rcx, rax
+    jmp .sm_out
+.sm_fail: xor eax,eax
+.sm_out: END
+
+FN SelectMask
+    mov [rip+selected_mask],rcx
+    lea rdx,[rip+selected_nums]
+    call MaskToNumbers
+    test eax,eax
+    jz .sel_out
+    mov dword ptr [rip+selected_index],0
+    mov qword ptr [rip+selected_score],0
+    cmp dword ptr [rip+model_ready],1
+    jne .sel_done
+    mov rcx,[rip+selected_mask]
     call ScoreDeep
-    mov qword ptr [rip + selected_score], rax
-    jmp .extract_selected
+    mov [rip+selected_score],rax
+    # Honest percentile against the fixed 512 uniform reference combinations,
+    # not a fabricated score-to-probability conversion.
+    mov rbx,rax
+    xor esi,esi
+    xor edi,edi
+1:  lea rax,[rip+null_masks]
+    mov rcx,[rax+rsi*8]
+    call ScoreDeep
+    cmp rax,rbx
+    jg 2f
+    inc edi
+2:  inc esi
+    cmp esi,NULL_COUNT
+    jb 1b
+    imul eax,edi,1000
+    shr eax,9
+    mov [rip+selected_index],eax
+.sel_done: mov eax,1
+.sel_out: END
+FN SampleCandidate
+    mov dword ptr [rip+rng_error],0
+    call SampleMask
+    test rax,rax
+    jz 1f
+    mov rcx,rax
+    call SelectMask
+1:  END
 
-.oracle_sample:
-    # Weight_i = max(score_i - heap_min + 1, 1).
-    lea rax, [rip + final_scores]
-    mov rbx, qword ptr [rax]
-    xor rsi, rsi
-    xor ecx, ecx
-.sum_weights:
-    cmp ecx, dword ptr [rip + final_count]
-    jae .have_total
-    mov rdx, qword ptr [rax + rcx*8]
-    sub rdx, rbx
-    inc rdx
-    cmp rdx, 1
-    jge 1f
-    mov edx, 1
-1:  add rsi, rdx
-    inc ecx
-    jmp .sum_weights
-.have_total:
-    lea rcx, [rsp + 32]
-    mov edx, 8
-    call SystemFunction036
-    test eax, eax
-    jz .fallback_first
-    mov rax, qword ptr [rsp + 32]
-    xor edx, edx
-    div rsi
-    mov r10, rdx
-    xor r11, r11
-    xor ecx, ecx
-    lea r8, [rip + final_scores]
-    lea r9, [rip + final_masks]
-.pick_loop:
-    mov rdx, qword ptr [r8 + rcx*8]
-    sub rdx, rbx
-    inc rdx
-    cmp rdx, 1
-    jge 2f
-    mov edx, 1
-2:  add r11, rdx
-    cmp r10, r11
-    jb .picked
-    inc ecx
-    cmp ecx, dword ptr [rip + final_count]
-    jb .pick_loop
-    xor ecx, ecx
-.picked:
-    mov rax, qword ptr [r9 + rcx*8]
-    mov qword ptr [rip + selected_mask], rax
-    mov rax, qword ptr [r8 + rcx*8]
-    mov qword ptr [rip + selected_score], rax
-    jmp .extract_selected
-.fallback_first:
-    lea rax, [rip + final_masks]
-    mov rdx, qword ptr [rax]
-    mov qword ptr [rip + selected_mask], rdx
-    lea rax, [rip + final_scores]
-    mov rdx, qword ptr [rax]
-    mov qword ptr [rip + selected_score], rdx
-
-.extract_selected:
-    mov rax, qword ptr [rip + selected_mask]
-    lea r8, [rip + selected_nums]
-    xor ecx, ecx
-.sel_bits:
-    bsf rdx, rax
-    btr rax, rdx
-    inc edx
-    mov dword ptr [r8 + rcx*4], edx
-    inc ecx
-    cmp ecx, 6
-    jb .sel_bits
-.sample_out:
-    add rsp, 48
-    pop rsi
-    pop rbx
-    leave
-    ret
-
-# Exact uniform 6/45 generation: OS cryptographic RNG, modulo-bias rejection,
-# then duplicate rejection. Returns a 45-bit mask in rax.
-GenerateUniformMask:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push rsi
-    sub rsp, 48
-    xor rbx, rbx
-    xor esi, esi
-.gu_loop:
-    lea rcx, [rsp + 32]
-    mov edx, 4
-    call SystemFunction036
-    test eax, eax
-    jz .gu_fallback
-    mov eax, dword ptr [rsp + 32]
-    cmp eax, 0xFFFFFFE1
-    jae .gu_loop
-    xor edx, edx
-    mov ecx, 45
-    div ecx
-    mov ecx, edx
-    bt rbx, rcx
-    jc .gu_loop
-    bts rbx, rcx
+# FCA_1 policy-sampled greedy overlap objective for small ticket bundles:
+# draw 64 policy candidates for each new ticket; maximize -sum overlap^2.
+# Exact duplicates forbidden; sequential diversification changes the joint law.
+FN GenerateTickets,32
+    mov ebp,ecx
+    cmp ebp,1
+    jb .gt_fail
+    cmp ebp,10
+    ja .gt_fail
+    mov dword ptr [rip+session_count],0
+    mov dword ptr [rip+rng_error],0
+    xor esi,esi
+.gt_ticket:
+    mov r15,0x7fffffffffffffff
+    xor r14d,r14d
+    mov r12d,64
+.gt_trial:
+    call SampleMask
+    test rax,rax
+    jz .gt_fail
+    mov rbx,rax
+    xor edi,edi
+    xor r13d,r13d
+1:  cmp edi,esi
+    jae .gt_compare
+    lea rax,[rip+session_masks]
+    mov rcx,[rax+rdi*8]
+    cmp rcx,rbx
+    je .gt_nexttrial
+    and rcx,rbx
+    call PopCount64
+    imul eax,eax
+    add r13d,eax
+    inc edi
+    jmp 1b
+.gt_compare:
+    cmp r13,r15
+    jae .gt_nexttrial
+    mov r15,r13
+    mov r14,rbx
+.gt_nexttrial:
+    dec r12d
+    jnz .gt_trial
+    test r14,r14
+    jz .gt_fail
+    lea rax,[rip+session_masks]
+    mov [rax+rsi*8],r14
     inc esi
-    cmp esi, 6
-    jb .gu_loop
-    mov rax, rbx
-    jmp .gu_out
-.gu_fallback:
-    # Deterministic fallback only if the OS RNG itself fails.
-    mov rax, 0x0000040201008081
-.gu_out:
-    add rsp, 48
-    pop rsi
-    pop rbx
-    leave
-    ret
-
-UpdateResultUI:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push rsi
-    push rdi
-    sub rsp, 216
-    lea rbx, [rip + selected_nums]
-    lea rcx, [rip + result_buf]
-    lea rdx, [rip + fmt_result]
-    mov r8d, dword ptr [rbx]
-    mov r9d, dword ptr [rbx + 4]
-    mov eax, dword ptr [rbx + 8]
-    mov qword ptr [rsp + 32], rax
-    mov eax, dword ptr [rbx + 12]
-    mov qword ptr [rsp + 40], rax
-    mov eax, dword ptr [rbx + 16]
-    mov qword ptr [rsp + 48], rax
-    mov eax, dword ptr [rbx + 20]
-    mov qword ptr [rsp + 56], rax
-    call wsprintfA
-    mov rcx, qword ptr [rip + h_result]
-    lea rdx, [rip + result_buf]
-    call SetWindowTextA
-
-    # Find top five persistence numbers.
-    lea rdi, [rsp + 144]
-    xor eax, eax
-    mov ecx, 10
-    rep stosd
-    xor esi, esi
-.persist_scan:
-    cmp esi, 45
-    jae .persist_done
-    lea rax, [rip + persistence]
-    mov edx, dword ptr [rax + rsi*4]
-    xor ecx, ecx
-.insert_top5:
-    cmp ecx, 5
-    jae .persist_next
-    mov eax, dword ptr [rsp + 144 + rcx*8 + 4]
-    cmp edx, eax
-    jle .insert_advance
-    mov r8d, 4
-.shift_top:
-    cmp r8d, ecx
-    jle .write_top
-    mov eax, dword ptr [rsp + 144 + r8*8 - 8]
-    mov dword ptr [rsp + 144 + r8*8], eax
-    mov eax, dword ptr [rsp + 144 + r8*8 - 4]
-    mov dword ptr [rsp + 144 + r8*8 + 4], eax
-    dec r8d
-    jmp .shift_top
-.write_top:
-    lea eax, [rsi + 1]
-    mov dword ptr [rsp + 144 + rcx*8], eax
-    mov dword ptr [rsp + 144 + rcx*8 + 4], edx
-    jmp .persist_next
-.insert_advance:
-    inc ecx
-    jmp .insert_top5
-.persist_next:
-    inc esi
-    jmp .persist_scan
-.persist_done:
-    # ORACLE Index is an internal 0..1000 relative score, not a probability.
-    mov rax, qword ptr [rip + selected_score]
-    lea rdx, [rip + final_scores]
-    sub rax, qword ptr [rdx]
-    sar rax, 5
-    add eax, 500
-    cmp eax, 0
-    jge 1f
-    xor eax, eax
-1:  cmp eax, 1000
-    jle 2f
-    mov eax, 1000
-2:  mov ebx, eax
-
-    lea rcx, [rip + metrics_buf]
-    lea rdx, [rip + fmt_metrics]
-    mov r8d, ebx
-    mov r9d, dword ptr [rip + draw_count]
-    mov eax, dword ptr [rip + skepticism_pct]
-    mov qword ptr [rsp + 32], rax
-    mov rax, qword ptr [rip + selected_score]
-    mov qword ptr [rsp + 40], rax
-    # top5 pairs: number,persistence percent
-    xor esi, esi
-    lea rdi, [rsp + 48]
-.metric_top_loop:
-    cmp esi, 5
-    jae .metric_call
-    mov eax, dword ptr [rsp + 144 + rsi*8]
-    mov r8, rsi
-    shl r8, 4
-    mov qword ptr [rdi + r8], rax
-    mov eax, dword ptr [rsp + 144 + rsi*8 + 4]
-    imul eax, eax, 100
-    xor edx, edx
-    div dword ptr [rip + final_count]
-    mov qword ptr [rdi + r8 + 8], rax
-    inc esi
-    jmp .metric_top_loop
-.metric_call:
-    call wsprintfA
-    mov rcx, qword ptr [rip + h_metrics]
-    lea rdx, [rip + metrics_buf]
-    call SetWindowTextA
-    add rsp, 216
-    pop rdi
-    pop rsi
-    pop rbx
-    leave
-    ret
+    mov [rip+session_count],esi
+    cmp esi,ebp
+    jb .gt_ticket
+    mov rcx,[rip+session_masks]
+    call SelectMask
+    mov eax,1
+    jmp .gt_out
+.gt_fail:
+    mov dword ptr [rip+session_count],0
+    xor eax,eax
+.gt_out: END 32

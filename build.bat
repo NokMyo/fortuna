@@ -1,38 +1,17 @@
 @echo off
 setlocal
+cd /d "%~dp0"
 if not exist build mkdir build
-where clang >nul 2>nul || (echo clang not found & exit /b 1)
-where dumpbin >nul 2>nul || (echo dumpbin not found & exit /b 1)
-where link >nul 2>nul || (echo MSVC link.exe not found & exit /b 1)
-
-rem Windows-hosted Clang has inconsistent nested .include handling for GAS-style
-rem assembly. Keep source modules separate, but assemble one flattened unit.
-(
-  echo .intel_syntax noprefix
-  type src\platform.inc
-  echo.
-  type src\state.inc
-  echo.
-  echo .section .text
-  echo .globl WinMainCRTStartup
-  type src\ui.inc
-  echo.
-  type src\data.inc
-  echo.
-  type src\oracle.inc
-  echo.
-  type src\sample.inc
-  echo.
-)>build\fortuna_all.s
-
-clang --target=x86_64-pc-windows-msvc -c build\fortuna_all.s -o build\fortuna.obj || exit /b 1
-
-dumpbin /symbols build\fortuna.obj | findstr /C:"WinMainCRTStartup" >nul || (
-  echo WinMainCRTStartup was not exported by the assembler
-  dumpbin /symbols build\fortuna.obj
-  exit /b 1
+where clang >nul 2>nul || (echo LLVM clang is required & exit /b 1)
+where link >nul 2>nul || (echo Run from the x64 Visual Studio developer prompt & exit /b 1)
+where rc >nul 2>nul || (echo Windows SDK resource compiler is required & exit /b 1)
+>build\fortuna_all.s echo .intel_syntax noprefix
+>>build\fortuna_all.s echo .equ WINDOWS,1
+for /f "usebackq delims=" %%m in ("scripts\modules.txt") do (
+  type "src\%%m.inc" >>build\fortuna_all.s
+  echo.>>build\fortuna_all.s
 )
-
-link /nologo /nodefaultlib /subsystem:windows /entry:WinMainCRTStartup /out:build\FebiusFortuna.exe build\fortuna.obj user32.lib kernel32.lib gdi32.lib comdlg32.lib advapi32.lib || exit /b 1
-
-echo Built build\FebiusFortuna.exe
+clang --target=x86_64-pc-windows-msvc -c build\fortuna_all.s -o build\fortuna.obj || exit /b 1
+rc /nologo /c65001 /fo build\app.res resources\app.rc || exit /b 1
+link /nologo /nodefaultlib /machine:x64 /subsystem:windows,6.02 /entry:WinMainCRTStartup /dynamicbase /highentropyva /nxcompat /Brepro /out:build\FebiusFortuna.exe build\fortuna.obj build\app.res user32.lib kernel32.lib gdi32.lib comdlg32.lib advapi32.lib shell32.lib comctl32.lib || exit /b 1
+exit /b 0

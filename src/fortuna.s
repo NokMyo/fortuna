@@ -1,13 +1,18 @@
 .intel_syntax noprefix
-
-# Febius Fortuna — x86-64 Windows native application.
-# The executable is assembled from assembly-only modules; no C/C++ runtime.
-.include "src/platform.inc"
-.include "src/state.inc"
-
-.section .text
-.globl WinMainCRTStartup
-.include "src/ui.inc"
+.equ WINDOWS,1
+.include "src/core.inc"
+.include "src/hash.inc"
 .include "src/data.inc"
-.include "src/oracle.inc"
+.include "src/stats.inc"
+.include "src/linalg.inc"
+.include "src/models.inc"
+.include "src/field.inc"
+.include "src/robust.inc"
 .include "src/sample.inc"
+.include "src/validation.inc"
+.include "src/report.inc"
+.include "src/strings.inc"
+.include "src/windows.inc"
+.include "src/ledger.inc"
+.include "src/selftest.inc"
+.include "src/ui.inc"

@@ -1,5 +1,7 @@
 # Febius Fortuna ORACLE — Master Engineering Specification
 
+> 1.0.0 릴리스의 실제 구현 범위와 차이는 [IMPLEMENTATION.md](IMPLEMENTATION.md)를 기준으로 확인하세요. 이 문서의 전체 설계·연구 목표가 모두 구현되었다는 의미는 아닙니다.
+
 > 상태: **Canonical / Master Specification**  
 > 대상: Febius Fortuna 최종 ORACLE 엔진  
 > 구현 원칙: **Windows x86-64 Assembly 중심, C/C++ CRT 비의존, 재현 가능하고 검증 가능한 분석적 무작위 생성기**  

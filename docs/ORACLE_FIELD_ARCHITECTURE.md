@@ -1,5 +1,7 @@
 # Febius Fortuna ORACLE Field Architecture
 
+> 1.0.0 릴리스의 실제 구현 범위와 차이는 [IMPLEMENTATION.md](IMPLEMENTATION.md)를 기준으로 확인하세요. 이 문서의 전체 설계·연구 목표가 모두 구현되었다는 의미는 아닙니다.
+
 > 상태: **Canonical Design Appendix / 구현 전 필수 참고 문서**  
 > 대상: Fortuna ORACLE 최종 엔진의 독자 계산 체계  
 > 범위: ORACLE Field Architecture(OFA), 독자 공식군, 계층 구조, 결합식, 검증식, 실패 조건, 구현 순서, 계산 최적화, 출력 지표  
