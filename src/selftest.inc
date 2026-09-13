@@ -137,6 +137,10 @@ FN SelfTest,64
     call BuildReport
     test eax,eax
     jz .st_fail
+    inc ebp
+    call LedgerSelfTest
+    test eax,eax
+    jz .st_fail
     xor eax,eax
     jmp .st_out
 .st_fail: mov eax,ebp

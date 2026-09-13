@@ -220,3 +220,71 @@ FN SealPick,64
     jmp .seal_out
 .seal_fail: xor eax,eax
 .seal_out: END 64
+
+.section .bss
+seal_saved_path: .skip 2048
+seal_test_path: .skip 2048
+.section .text
+# Exercise real Windows append/reuse/refusal against an isolated temporary file.
+# The user's ledger is never modified by --self-test.
+FN LedgerSelfTest,32
+    mov eax,[rip+last_round]
+    mov [rsp+32],eax
+    xor ebp,ebp
+    lea rcx,[rip+seal_saved_path]
+    lea rdx,[rip+ledger_path]
+    mov r8d,2048
+    call Copy
+    mov ecx,1024
+    lea rdx,[rip+seal_test_path]
+    call GetTempPathW
+    test eax,eax
+    jz .lst_restore
+    cmp eax,1024
+    jae .lst_restore
+    lea rcx,[rip+seal_test_path]
+    lea rdx,[rip+app_title]
+    xor r8d,r8d
+    lea r9,[rip+ledger_path]
+    call GetTempFileNameW
+    test eax,eax
+    jz .lst_restore
+    mov dword ptr [rip+last_round],20000
+    call SealPick
+    cmp eax,1
+    jne .lst_delete
+    mov rax,[rip+selected_mask]
+    mov [rsp+40],rax
+    call SealPick
+    cmp eax,2
+    jne .lst_delete
+    mov rax,[rip+selected_mask]
+    cmp rax,[rsp+40]
+    jne .lst_delete
+    mov dword ptr [rip+last_round],20001
+    call SealPick
+    cmp eax,1
+    jne .lst_delete
+    # Truncated crash residue must be rejected, never silently repaired.
+    lea rcx,[rip+ledger_path]
+    lea rdx,[rip+seal_record]
+    mov r8d,1
+    call WriteBytes
+    test eax,eax
+    jz .lst_delete
+    call SealPick
+    test eax,eax
+    jnz .lst_delete
+    mov ebp,1
+.lst_delete:
+    lea rcx,[rip+ledger_path]
+    call DeleteFileW
+.lst_restore:
+    lea rcx,[rip+ledger_path]
+    lea rdx,[rip+seal_saved_path]
+    mov r8d,2048
+    call Copy
+    mov eax,[rsp+32]
+    mov [rip+last_round],eax
+    mov eax,ebp
+    END 32

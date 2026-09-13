@@ -27,6 +27,8 @@ using System.Text;
 using System.Runtime.InteropServices;
 public static class WindowCheck {
  [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L,T,R,B; }
+ [DllImport("user32.dll")] public static extern IntPtr GetDlgItem(IntPtr h, int id);
+ [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
  [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
  [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern uint GetDlgItemText(IntPtr h,int id,StringBuilder s,int n);
@@ -36,10 +38,22 @@ public static class WindowCheck {
 '@
 $p = Start-Process -FilePath $exe -PassThru
 try {
-    for ($i=0; $i -lt 50; $i++) { Start-Sleep -Milliseconds 100; $p.Refresh(); if ($p.MainWindowHandle -ne 0) { break } }
+    $p.WaitForInputIdle(10000) | Out-Null
+    for ($i=0; $i -lt 100; $i++) { Start-Sleep -Milliseconds 100; $p.Refresh(); if ($p.MainWindowHandle -ne 0 -and [WindowCheck]::GetDlgItem($p.MainWindowHandle,1102) -ne [IntPtr]::Zero) { break } }
     $h = $p.MainWindowHandle
+    Write-Host "GUI handle=$h title=$($p.MainWindowTitle) tickets=$([WindowCheck]::GetDlgItem($h,1102))"
     if ($h -eq 0) { throw 'GUI window was not created' }
     [WindowCheck]::SendMessage($h,0x111,[IntPtr]1005,[IntPtr]::Zero) | Out-Null
+    $rect = [WindowCheck+RECT]::new()
+    if (-not [WindowCheck]::GetWindowRect($h,[ref]$rect)) { throw 'Cannot measure GUI' }
+    $bmp = [Drawing.Bitmap]::new($rect.R-$rect.L,$rect.B-$rect.T)
+    $graphics = [Drawing.Graphics]::FromImage($bmp)
+    $dc = $graphics.GetHdc()
+    try { if (-not [WindowCheck]::PrintWindow($h,$dc,0)) { throw 'Cannot capture GUI' } }
+    finally { $graphics.ReleaseHdc($dc) }
+    $bmp.Save((Join-Path $PWD 'build/fortuna-windows.png'),[Drawing.Imaging.ImageFormat]::Png)
+    $graphics.Dispose(); $bmp.Dispose()
+    Write-Host ("GUI_PREVIEW_BASE64=" + [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $PWD "build/fortuna-windows.png"))))
     $text = [Text.StringBuilder]::new(4096)
     [WindowCheck]::GetDlgItemText($h,1102,$text,4096) | Out-Null
     $text.ToString() | Set-Content build/gui-tickets.txt
@@ -53,15 +67,6 @@ try {
         if (@($balls | Select-Object -Unique).Count -ne 6 -or @($balls | Where-Object { $_ -lt 1 -or $_ -gt 45 }).Count) { throw "Invalid ticket: $line" }
     }
     [WindowCheck]::SendMessage($h,0x111,[IntPtr]1007,[IntPtr]::Zero) | Out-Null
-    $rect = [WindowCheck+RECT]::new()
-    if (-not [WindowCheck]::GetWindowRect($h,[ref]$rect)) { throw 'Cannot measure GUI' }
-    $bmp = [Drawing.Bitmap]::new($rect.R-$rect.L,$rect.B-$rect.T)
-    $graphics = [Drawing.Graphics]::FromImage($bmp)
-    $dc = $graphics.GetHdc()
-    try { if (-not [WindowCheck]::PrintWindow($h,$dc,0)) { throw 'Cannot capture GUI' } }
-    finally { $graphics.ReleaseHdc($dc) }
-    $bmp.Save((Join-Path $PWD 'build/fortuna-windows.png'),[Drawing.Imaging.ImageFormat]::Png)
-    $graphics.Dispose(); $bmp.Dispose()
     [WindowCheck]::PostMessage($h,0x10,[IntPtr]::Zero,[IntPtr]::Zero) | Out-Null
     if (-not $p.WaitForExit(10000)) { throw 'GUI did not close' }
     if ($p.ExitCode -ne 0) { throw "GUI exit $($p.ExitCode)" }
