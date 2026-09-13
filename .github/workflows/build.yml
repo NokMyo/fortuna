@@ -1,0 +1,22 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  windows-x64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Build pure x86-64 assembly executable
+        shell: cmd
+        run: build.bat
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Febius-Fortuna-windows-x64
+          path: build/FebiusFortuna.exe
