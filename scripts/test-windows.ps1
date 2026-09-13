@@ -31,7 +31,7 @@ public static class WindowCheck {
  [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
  [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
- [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern uint GetDlgItemText(IntPtr h,int id,StringBuilder s,int n);
+ [DllImport("user32.dll",EntryPoint="SendMessageW",CharSet=CharSet.Unicode)] public static extern IntPtr ReadControl(IntPtr h,uint msg,IntPtr n,[Out] StringBuilder s);
  [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr h,uint msg,IntPtr w,IntPtr l);
  [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h,uint msg,IntPtr w,IntPtr l);
 }
@@ -55,7 +55,8 @@ try {
     $graphics.Dispose(); $bmp.Dispose()
     Write-Host ("GUI_PREVIEW_BASE64=" + [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $PWD "build/fortuna-windows.png"))))
     $text = [Text.StringBuilder]::new(4096)
-    [WindowCheck]::GetDlgItemText($h,1102,$text,4096) | Out-Null
+    $length = [WindowCheck]::ReadControl([WindowCheck]::GetDlgItem($h,1102),0xD,[IntPtr]4096,$text)
+    Write-Host "Read $length UTF-16 characters from ticket control"
     $text.ToString() | Set-Content build/gui-tickets.txt
     $lines = @($text.ToString() -split '\r?\n' | Where-Object { $_.Trim() })
     if ($lines.Count -ne 5) { throw "Expected 5 ticket rows, got $($lines.Count): $text" }

@@ -82,7 +82,7 @@ Ledger records are 256-byte FLG1 blocks with previous hash and SHA-256 digest, d
 
 ## Verification and remaining work
 
-Release CI exercises the real assembly on Linux against independent Python/NumPy expectations and builds/runs the native Windows executable. Checks cover SHA padding boundaries, binomials, elementary math, strict transactional/canonical parsing, count and prime features, matrix inversion, BH values, exhaustive enumeration, valid distinct survivors, probability sums, alternate-world prefix isolation, full rolling validation, independent-confirmation rejection, replay hashes, valid bundles, report bounds, cancellation, startup/CLI errors, Unicode file paths, absence of CRT imports, GUI generation and capture.
+Release CI exercises the real assembly on Linux against independent Python/NumPy expectations and builds/runs the native Windows executable. Checks cover SHA padding boundaries, binomials, elementary math, strict transactional/canonical parsing, count and prime features, matrix inversion, BH values, exhaustive enumeration, valid distinct survivors, probability sums, alternate-world prefix isolation, full rolling validation, independent-confirmation rejection and positive promotion on a deliberately non-lottery sequence, replay hashes, valid bundles, report bounds, cancellation, startup/CLI errors, Unicode file paths, absence of CRT imports, GUI generation and capture, plus temporary-ledger append/reuse/truncation refusal.
 
 The native adapter only changes the calling convention and OS entropy shim. Tests are engineering checks, not evidence of lottery prediction performance. No real lottery dataset is bundled, no actual-history performance claim is made, and code signing is not included.
 

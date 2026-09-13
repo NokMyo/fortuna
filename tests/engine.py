@@ -85,6 +85,15 @@ assert fn(lib,'ConfirmPolicy')()==1
 assert scalar(lib,'confirmation_count').value==30
 assert scalar(lib,'confirmation_status').value==2
 assert scalar(lib,'rho',C.c_double).value==1
+# A deliberately non-lottery sequence must exercise the positive gate as well.
+# This verifies policy plumbing, not predictive performance on real draws.
+load([[1,2,3,4,5,6] for _ in range(120)])
+assert fn(lib,'AnalyzeOracle')()==1
+assert scalar(lib,'validation_count').value==30
+assert scalar(lib,'confirmation_count').value==30
+assert scalar(lib,'confirmation_status').value==1
+assert .5 <= scalar(lib,'rho',C.c_double).value < 1
+assert abs(sum(array(lib,'model_weights',12))-1)<1e-12
 # OS entropy path and diversified bundles, plus cancellation fail-closed.
 scalar(lib,'rng_mode').value=0
 assert fn(lib,'GenerateTickets',(C.c_uint32,))(10)==1
