@@ -129,19 +129,19 @@ BEGIN
  DEFPUSHBUTTON "확인",IDOK,248,142,60,18
 END
 
-302 DIALOGEX 0,0,330,210
+302 DIALOGEX 0,0,330,205
 STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Febius Account 로그인"
 FONT 9,"Malgun Gothic"
 BEGIN
     LTEXT "FEBIUS  /  ACCOUNT",-1,14,12,300,12
-    LTEXT "Fortuna를 사용하려면 Febius Account의 유효한 라이선스가 필요합니다.",-1,14,31,300,26
-    GROUPBOX "기기 승인",-1,14,62,302,79
-    LTEXT "승인 코드",-1,28,79,70,12
-    CTEXT "--------",1300,101,76,118,22,SS_CENTER | SS_CENTERIMAGE | WS_BORDER
-    PUSHBUTTON "Febius Account 열기",1302,225,76,78,22
-    LTEXT "",1301,28,108,274,25
-    LTEXT "브라우저에서 로그인 후 Fortuna 사용을 승인하면 프로그램이 자동으로 확인합니다.",-1,14,149,302,28
-    DEFPUSHBUTTON "승인 확인",IDOK,174,181,68,19
+    LTEXT "Fortuna를 사용하려면 Febius Account 로그인과 유효한 라이선스가 필요합니다.",-1,14,31,300,25
+    LTEXT "아이디",-1,22,70,62,14
+    EDITTEXT 1300,92,66,216,21,ES_AUTOHSCROLL
+    LTEXT "비밀번호",-1,22,101,62,14
+    EDITTEXT 1301,92,97,216,21,ES_PASSWORD | ES_AUTOHSCROLL
+    LTEXT "",1302,22,128,286,32
+    LTEXT "비밀번호는 저장하지 않으며 로그인 세션만 이 Windows 사용자에 암호화해 저장합니다.",-1,22,160,286,24
+    DEFPUSHBUTTON "로그인",IDOK,174,181,68,19
     PUSHBUTTON "종료",IDCANCEL,248,181,68,19
 END
