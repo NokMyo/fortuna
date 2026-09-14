@@ -1,4 +1,4 @@
-# Fortuna ORACLE Engine 1.0.0
+# Fortuna ORACLE Engine 1.1.0
 
 Febius Fortuna의 분석·검증·번호 생성 엔진입니다. **기존 `NokMyo/fortuna` 저장소의 `engine/` 폴더에서 독립적으로 관리합니다.** 계산 로직은 x64 어셈블리이며 GUI에 의존하지 않습니다.
 
@@ -25,3 +25,7 @@ build.bat
 Linux 교차 빌드는 `sh scripts/build-linux.sh`로 정적 라이브러리를 만듭니다. `sdk` 인수를 추가하면 개발용 DLL도 생성합니다. `python tests/native.py`와 `python tests/engine.py`는 GCC와 Python/NumPy가 필요합니다. Windows DLL 검사는 `build.bat sdk` 실행 후 `python tests/dll-windows.py`로 실행합니다.
 
 엔진 버전은 `VERSION`, 공개 호출 규격은 ABI 1.0으로 관리합니다. 엔진 내부 함수와 상태는 공개하지 않습니다. 앱 연결 코드는 상위 `src/engine_bridge.inc`에 있습니다. 개발·검증용 Python과 헤더는 실행 로직에 포함되지 않습니다.
+
+## 정밀 연구 확장
+
+`joint.inc`, `research.inc`, `forecast.inc`가 공동 확률모형, 축소, 탐색 누락 감사, 완전한 성분 제거 재검증, 중첩 검증, 적응적 섭동과 사전 예측 기록을 구현합니다. [계산 규격과 제한](docs/RESEARCH.md)을 기준으로 사용하세요. 공개 API는 기존 ABI 1.0 구조체를 유지하고 연구용 함수를 추가했습니다. 일반 분석과 연구 분석은 같은 엔진 잠금을 사용합니다.

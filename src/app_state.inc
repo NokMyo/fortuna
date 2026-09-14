@@ -23,3 +23,7 @@ elapsed_ms: .skip 8
 api_snapshot: .skip 272
 api_progress: .skip 16
 report_buffer: .skip 2097152
+
+.section .bss
+app_research_mode: .skip 4
+forecast_path: .skip 2048

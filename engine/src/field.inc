@@ -75,7 +75,10 @@ FN BuildNormalization
     divsd xmm0,[r13+rdi*8]
     maxsd xmm0,[rip+neg_zlimit]
     minsd xmm0,[rip+zlimit]
-    movsd [rbx+rdi*8],xmm0
+    cmp edi,[rip+research_excluded]
+    jne 4f
+    xorpd xmm0,xmm0
+4:  movsd [rbx+rdi*8],xmm0
     inc edi
     cmp edi,MODEL_COUNT
     jb 1b
@@ -167,7 +170,10 @@ FN ComputeNormalized
     divsd xmm0,[r8+rcx*8]
     maxsd xmm0,[rip+neg_zlimit]
     minsd xmm0,[rip+zlimit]
-    movsd [r9+rcx*8],xmm0
+    cmp ecx,[rip+research_excluded]
+    jne 2f
+    xorpd xmm0,xmm0
+2:  movsd [r9+rcx*8],xmm0
     inc ecx
     cmp ecx,MODEL_COUNT
     jb 1b
@@ -201,8 +207,10 @@ FN PrepareFast
     divsd xmm1,[rdi+rcx*8]
     maxsd xmm1,[rip+neg_zlimit]
     minsd xmm1,[rip+zlimit]
+    cmp ecx,[rip+research_excluded]
+    je 2f
     addsd xmm0,xmm1
-    inc ecx
+2:  inc ecx
     cmp ecx,4
     jb 1b
     mulsd xmm0,[rip+scale_q]
@@ -216,9 +224,15 @@ FN PrepareFast
     xor esi,esi
 1:  movsd xmm0,[rbx+rsi*8]
     divsd xmm0,[rdi+32]
-    movsd xmm1,[rbx+rsi*8+45*45*8]
+    cmp dword ptr [rip+research_excluded],4
+    jne 2f
+    xorpd xmm0,xmm0
+2:  movsd xmm1,[rbx+rsi*8+45*45*8]
     divsd xmm1,[rdi+40]
-    addsd xmm0,xmm1
+    cmp dword ptr [rip+research_excluded],5
+    jne 3f
+    xorpd xmm1,xmm1
+3:  addsd xmm0,xmm1
     maxsd xmm0,[rip+neg_zlimit]
     minsd xmm0,[rip+zlimit]
     mulsd xmm0,[rip+scale_q]
@@ -345,7 +359,7 @@ FastHeapInsert:
     lea r8,[rip+fast_masks]
     lea r9,[rip+fast_scores]
     lea r10,[rip+fast_count]
-    mov r11d,TOP_FAST
+    mov r11d,[rip+scan_capacity]
     jmp HeapInsert
 FinalHeapInsert:
     lea r8,[rip+final_masks]
@@ -423,7 +437,14 @@ FN ScanField
     inc esi
     jmp .sf_deep
 .sf_done:
-    mov eax,[rip+final_count]
+    cmp dword ptr [rip+research_active],1
+    jne 1f
+    cmp dword ptr [rip+audit_running],0
+    jne 1f
+    call SearchAudit
+    test eax,eax
+    jz .sf_cancel
+1:  mov eax,[rip+final_count]
     mov [rip+field_count],eax
     mov eax,1
     jmp .sf_out

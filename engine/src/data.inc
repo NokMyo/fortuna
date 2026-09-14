@@ -314,6 +314,8 @@ FN ParseCsv,96
     mov ecx,[rbx+rax]
     mov [rip+last_round],ecx
     mov dword ptr [rip+model_ready],0
+    mov dword ptr [rip+research_ready],0
+    mov dword ptr [rip+forecast_valid],0
     mov dword ptr [rip+field_ready],0
     mov dword ptr [rip+field_count],0
     mov dword ptr [rip+session_count],0

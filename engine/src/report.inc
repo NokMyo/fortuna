@@ -1,5 +1,5 @@
 .section .rdata,"dr"
-r_header: .asciz "\357\273\277Fortuna ORACLE Engine 1.0.0 / reference report\r\nInternal scores and sampling weights are NOT winning probabilities.\r\nFair jackpot probability: 1 / 8145060.\r\n\r\nDataset SHA-256: "
+r_header: .asciz "\357\273\277Fortuna ORACLE Engine 1.1.0 / reference report\r\nInternal scores and sampling weights are NOT winning probabilities.\r\nFair jackpot probability: 1 / 8145060.\r\n\r\nDataset SHA-256: "
 r_config: .asciz "\r\nConfig SHA-256: "
 r_field: .asciz "\r\nCandidate-field SHA-256: "
 r_count: .asciz "\r\nDraws / latest / target: "
@@ -387,6 +387,7 @@ FN BuildReport
     call Text
     jmp .br_fold
 .br_finish:
+    call ResearchReport
     lea rcx,[rip+r_limits]
     call Text
     mov rax,[rip+report_cursor]

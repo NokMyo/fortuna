@@ -37,7 +37,20 @@ FN WinMainCRTStartup,32
     lea rdx,[rip+cmd_analyze]
     call lstrcmpW
     test eax,eax
+    jz .entry_analysis_args
+    mov rcx,[rbx+8]
+    lea rdx,[rip+cmd_research]
+    call lstrcmpW
+    mov dword ptr [rip+app_research_mode],1
+    test eax,eax
+    jz .entry_analysis_args
+    mov rcx,[rbx+8]
+    lea rdx,[rip+cmd_research_full]
+    call lstrcmpW
+    test eax,eax
     jnz .entry_bad_args
+    mov dword ptr [rip+app_research_mode],2
+.entry_analysis_args:
     cmp dword ptr [rip+command_argc],4
     jne .entry_bad_args
     mov rcx,[rbx+16]
@@ -237,6 +250,16 @@ FN DialogProc,128
     jne .dp_busy
     cmp eax,ID_LOAD
     je .dp_load
+    cmp eax,1023
+    je .dp_joint_generate
+    cmp eax,1019
+    je .dp_research
+    cmp eax,1020
+    je .dp_research_full
+    cmp eax,1021
+    je .dp_forecast_save
+    cmp eax,1022
+    je .dp_forecast_audit
     cmp eax,ID_ANALYZE
     je .dp_analyze
     cmp eax,ID_GENERATE
@@ -299,6 +322,14 @@ FN DialogProc,128
     call Alert
     jmp .dp_true
 .dp_analyze:
+    mov dword ptr [rip+app_research_mode],0
+    jmp .dp_analyze_start
+.dp_research:
+    mov dword ptr [rip+app_research_mode],1
+    jmp .dp_analyze_start
+.dp_research_full:
+    mov dword ptr [rip+app_research_mode],2
+.dp_analyze_start:
     cmp dword ptr [rip+history_count],60
     jb .dp_need
     mov dword ptr [rip+analysis_busy],1
@@ -422,6 +453,41 @@ FN DialogProc,128
     jmp .dp_true
 .dp_report_need:
     lea rcx,[rip+text_report_need]
+    call Alert
+    jmp .dp_true
+.dp_joint_generate:
+    mov ecx,1
+    lea rdx,[rip+session_masks]
+    mov r8d,10
+    call FortunaOracleGenerateResearch
+    test eax,eax
+    jnz .dp_forecast_error
+    call RefreshEngineState
+    call UpdateResultUI
+    lea rcx,[rip+text_joint_research]
+    call Notify
+    jmp .dp_true
+.dp_forecast_save:
+    mov edx,1
+    jmp .dp_forecast_run
+.dp_forecast_audit:
+    xor edx,edx
+.dp_forecast_run:
+    mov ebp,edx
+    cmp word ptr [rip+forecast_path],0
+    je .dp_forecast_error
+    lea rcx,[rip+forecast_path]
+    call FortunaOracleForecastLedgerW
+    test eax,eax
+    js .dp_forecast_error
+    lea rcx,[rip+text_forecast_saved]
+    test ebp,ebp
+    jnz 1f
+    lea rcx,[rip+text_forecast_audited]
+1:  call Notify
+    jmp .dp_true
+.dp_forecast_error:
+    lea rcx,[rip+text_forecast_error]
     call Alert
     jmp .dp_true
 .dp_folder:

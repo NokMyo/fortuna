@@ -17,6 +17,9 @@ Set-Content -Encoding utf8 build/invalid.csv '1,1,1,3,4,5,6'
 Run-Checked '--analyze build/invalid.csv build/invalid-report.txt' 1
 if (Test-Path build/invalid-report.txt) { throw 'Rejected CSV produced a report' }
 Run-Checked '--unknown-argument' 2
+Get-Content engine/data/SYNTHETIC-example.csv | Select-Object -First 61 | Set-Content -Encoding utf8 build/research-60.csv
+Run-Checked '--research build/research-60.csv build/research-report.txt'
+if ((Get-Content -Raw build/research-report.txt) -notmatch 'ORACLE RESEARCH 1.1') { throw 'Research command did not run the suite' }
 $imports = (& dumpbin /imports $exe | Out-String)
 if ($imports -match '(?i)FortunaOracle.dll') { throw 'App must include the engine; external engine DLL dependency found' }
 $imports | Set-Content build/imports.txt

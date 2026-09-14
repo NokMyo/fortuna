@@ -1,4 +1,4 @@
-# Fortuna ORACLE Engine 1.0.0 — Windows x64 SDK
+# Fortuna ORACLE Engine 1.1.0 — Windows x64 SDK
 
 `FortunaOracle.dll` is a standalone, pure x86-64 assembly analysis library. It does not load Febius Fortuna, create windows, open dialogs or depend on a C/C++ runtime. Its only runtime dependencies are Windows Kernel32 and Advapi32. The GUI is a separate client of this public ABI.
 
@@ -6,8 +6,8 @@ The same API is also available in `FortunaOracleStatic.lib` for embedding in a s
 
 ## Distribution and versioning
 
-- Application: **Febius Fortuna 1.2.0** (`FebiusFortuna.exe`).
-- Engine: **Fortuna ORACLE Engine 1.0.0** (`FortunaOracle.dll`).
+- Application: **Febius Fortuna 1.3.0** (`FebiusFortuna.exe`).
+- Engine: **Fortuna ORACLE Engine 1.1.0** (`FortunaOracle.dll`).
 - Binary interface: **ABI 1.0**, `0x00010000`.
 
 The application embeds the static engine in its EXE; its ZIP requires no engine DLL. Engine source, documentation, tests and SDK live under `engine/` in the same Fortuna repository. Run `engine/build.bat sdk` to build a developer DLL, import library and standalone assembly client.
@@ -74,3 +74,15 @@ Keep `FortunaOracle.dll` beside `generate.exe`. The sample checks ABI, initializ
 CI runs this independent executable and a separate Python ctypes client against the real Windows DLL. It checks argument boundaries, version/layout, uniform generation, transactional import, completed analysis, report sizing/canary buffers, busy isolation, progress and cancellation. The GUI is tested independently against the same DLL. Existing numerical regression tests continue to build the actual relocated engine assembly for independent comparisons.
 
 The engine extraction does not claim new predictive performance or complete the remaining mathematical research roadmap. All prior reference-model limitations still apply; scores are not jackpot probabilities.
+
+## Research extension (engine 1.1.0, existing ABI 1.0 retained)
+
+- `AnalyzeResearch(flags)`: synchronous complete suite, flags 0 audited fast selection or 1 full deep scoring. Other flags rejected. Same busy/cancel contract as Analyze. No partial research result becomes ready.
+- `GetJointProbability(mask, out[2])`: valid six-bit mask in bits 0..44; writes pure model P and half-uniform forecast Q. Requires completed research for the current dataset.
+- `GenerateResearch(count, masks, capacity)`: 1..10 independent Q samples, possible duplicates. Uses OS entropy. This is explicitly unvalidated research generation; the existing Generate retains the reference policy.
+- `ForecastLedgerW(path, append)`: 0 audits an existing local FJP1 ledger; 1 audits and freezes the next forecast after research. Return 0 success, 1 already pending, negative failure. Missing/changed historical prefix, duplicate target, corrupt/truncated record or elapsed local deadline fails closed. Audit-only needs loaded history but does not require refitting the archived model.
+- `GetResearchSnapshot(out, bytes)`: at least 128 bytes, see SDK header. Read `ready` before model diagnostics and `forecast_valid` before ledger values. Last uint32 is reserved. The original 272-byte snapshot is unchanged.
+
+New successful CSV imports and ordinary Analyze invalidate the research-ready flag. Invalid CSV imports preserve prior research just as they preserve prior data. UseUniform disables research generation. Research analysis clears the ledger-valid flag until the ledger is audited again. The same one-state process model and private SRW lock apply to all research calls.
+
+The report includes all ablation and outer-fold rows. Engine/client code and SDK declarations are versioned together in this repository. [Research formulas, limits and FJP1 layout](RESEARCH.md)

@@ -75,7 +75,14 @@ FN LoadCsvFile
     sete al
     END
 FN AnalyzeOracle
-    call FortunaOracleAnalyze
+    mov ecx,[rip+app_research_mode]
+    test ecx,ecx
+    jz 1f
+    dec ecx
+    call FortunaOracleAnalyzeResearch
+    jmp 2f
+1:  call FortunaOracleAnalyze
+2:
     mov ebx,eax
     call RefreshEngineState
     xor eax,eax

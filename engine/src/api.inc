@@ -23,7 +23,7 @@ FN FortunaOracleGetAbiVersion
     mov eax,0x10000
     END
 FN FortunaOracleGetEngineVersion
-    mov eax,0x10000
+    mov eax,0x10100
     END
 FN ApiLock
     lea rcx,[rip+api_lock]
@@ -114,6 +114,8 @@ FN FortunaOracleAnalyze
     test eax,eax
     jnz .ana_out
     mov dword ptr [rip+cancel_flag],0
+    mov dword ptr [rip+research_ready],0
+    mov dword ptr [rip+forecast_valid],0
     call AnalyzeOracle
     xor ecx,ecx
     test eax,eax
@@ -171,7 +173,7 @@ FN FortunaOracleGetSnapshot
     call Zero
     mov dword ptr [rbx],272
     mov dword ptr [rbx+4],0x10000
-    mov dword ptr [rbx+8],0x10000
+    mov dword ptr [rbx+8],0x10100
     mov eax,[rip+model_ready]
     shl eax,1
     or eax,[rip+field_ready]
@@ -309,6 +311,7 @@ FN FortunaOracleUseUniform
     call ApiLock
     test eax,eax
     jnz .uniform_out
+    mov dword ptr [rip+research_ready],0
     mov dword ptr [rip+field_ready],0
     movsd xmm0,[rip+one]
     movsd [rip+rho],xmm0
@@ -325,3 +328,190 @@ FN FortunaOracleSelfTest
     mov ecx,eax
     call ApiFinish
 .test_out: END
+
+.globl FortunaOracleAnalyzeResearch
+.globl FortunaOracleGetJointProbability
+.globl FortunaOracleForecastLedgerW
+.globl FortunaOracleGetResearchSnapshot
+# flags bit0 requests exhaustive deep scoring (very expensive); other bits invalid.
+FN FortunaOracleAnalyzeResearch
+    cmp ecx,1
+    ja .arapi_arg
+    mov ebx,ecx
+    call ApiLock
+    test eax,eax
+    jnz .arapi_out
+    mov [rip+research_full_scan],ebx
+    mov dword ptr [rip+cancel_flag],0
+    mov dword ptr [rip+forecast_valid],0
+    call AnalyzeResearch
+    xor ecx,ecx
+    test eax,eax
+    jnz 1f
+    mov ecx,-3
+    cmp dword ptr [rip+cancel_flag],1
+    jne 1f
+    mov ecx,-6
+1:  call ApiFinish
+    jmp .arapi_out
+.arapi_arg: mov eax,-1
+.arapi_out: END
+# out receives [joint model probability, 50%-uniform forecast probability].
+FN FortunaOracleGetJointProbability
+    test rdx,rdx
+    jz .jp_arg
+    mov rbx,rcx
+    mov rsi,rdx
+    mov rax,rcx
+    shr rax,45
+    jnz .jp_arg
+    call PopCount64
+    cmp eax,6
+    jne .jp_arg
+    call ApiLock
+    test eax,eax
+    jnz .jp_out
+    cmp dword ptr [rip+research_ready],1
+    jne .jp_state
+    mov rcx,rbx
+    call JointLogProbability
+    call Exp
+    movsd [rsi],xmm0
+    mov rcx,rbx
+    call JointForecastLog
+    call Exp
+    movsd [rsi+8],xmm0
+    xor ecx,ecx
+    jmp .jp_finish
+.jp_state: mov ecx,-4
+.jp_finish: call ApiFinish; jmp .jp_out
+.jp_arg: mov eax,-1
+.jp_out: END
+FN FortunaOracleForecastLedgerW
+    test rcx,rcx
+    jz .fla_arg
+    cmp edx,1
+    ja .fla_arg
+    mov rbx,rcx
+    mov esi,edx
+    call ApiLock
+    test eax,eax
+    jnz .fla_out
+    mov rcx,rbx
+    mov edx,esi
+    call ForecastLedger
+    mov ecx,-3
+    test eax,eax
+    jz 1f
+    lea ecx,[rax-1]
+1:  call ApiFinish
+    jmp .fla_out
+.fla_arg: mov eax,-1
+.fla_out: END
+FN FortunaOracleGetResearchSnapshot
+    test rcx,rcx
+    jz .rs_arg
+    cmp edx,128
+    jb .rs_arg
+    mov rbx,rcx
+    call ApiLock
+    test eax,eax
+    jnz .rs_out
+    mov rcx,rbx
+    mov edx,128
+    call Zero
+    mov dword ptr [rbx],128
+    mov eax,[rip+research_ready]
+    mov [rbx+4],eax
+    mov eax,[rip+research_ablation_count]
+    mov [rbx+8],eax
+    mov eax,[rip+research_outer_count]
+    mov [rbx+12],eax
+    mov eax,[rip+research_world_count]
+    mov [rbx+16],eax
+    mov eax,[rip+research_mc_converged]
+    mov [rbx+20],eax
+    mov eax,[rip+forecast_evaluated]
+    mov [rbx+24],eax
+    mov eax,[rip+forecast_pending]
+    mov [rbx+28],eax
+    mov rax,[rip+joint_logz]
+    mov [rbx+32],rax
+    mov rax,[rip+research_log_e]
+    mov [rbx+40],rax
+    mov rax,[rip+forecast_log_e]
+    mov [rbx+48],rax
+    mov rax,[rip+forecast_max_log_e]
+    mov [rbx+56],rax
+    mov rax,[rip+research_joint_loss]
+    mov [rbx+64],rax
+    mov rax,[rip+research_mc_error]
+    mov [rbx+72],rax
+    mov rax,[rip+research_data_variance]
+    mov [rbx+80],rax
+    mov rax,[rip+research_disagreement]
+    mov [rbx+88],rax
+    mov rax,[rip+research_aleatoric]
+    mov [rbx+96],rax
+    mov eax,[rip+audit_samples]
+    mov [rbx+104],eax
+    mov eax,[rip+audit_misses_before]
+    mov [rbx+108],eax
+    mov eax,[rip+audit_misses_after]
+    mov [rbx+112],eax
+    mov eax,[rip+audit_capacity]
+    mov [rbx+116],eax
+    mov eax,[rip+forecast_valid]
+    mov [rbx+120],eax
+    xor ecx,ecx
+    call ApiFinish
+    jmp .rs_out
+.rs_arg: mov eax,-1
+.rs_out: END
+
+.globl FortunaOracleGenerateResearch
+# Research-only sampling, never represented as a validated production policy.
+FN FortunaOracleGenerateResearch
+    cmp ecx,1
+    jb .gr_arg
+    cmp ecx,10
+    ja .gr_arg
+    test rdx,rdx
+    jz .gr_arg
+    cmp r8d,ecx
+    jb .gr_arg
+    mov ebp,ecx
+    mov rbx,rdx
+    call ApiLock
+    test eax,eax
+    jnz .gr_out
+    cmp dword ptr [rip+research_ready],1
+    jne .gr_state
+    mov dword ptr [rip+rng_mode],0
+    mov dword ptr [rip+rng_error],0
+    mov dword ptr [rip+session_count],0
+    xor esi,esi
+.gr_sample:
+    call JointSample
+    test rax,rax
+    jz .gr_random
+    lea rdx,[rip+session_masks]
+    mov [rdx+rsi*8],rax
+    inc esi
+    cmp esi,ebp
+    jb .gr_sample
+    # Independent research draws may repeat; no post-hoc diversification.
+    mov [rip+session_count],ebp
+    mov rcx,[rip+session_masks]
+    call SelectMask
+    mov rcx,rbx
+    lea rdx,[rip+session_masks]
+    lea r8d,[rbp*8]
+    call Copy
+    xor ecx,ecx
+    jmp .gr_finish
+.gr_random: mov ecx,-5; jmp .gr_finish
+.gr_state: mov ecx,-4
+.gr_finish: call ApiFinish; jmp .gr_out
+.gr_arg: mov eax,-1
+.gr_out: END

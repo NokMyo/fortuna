@@ -73,6 +73,8 @@ FN BHCorrection
 # exhaustive 8,145,060 scan, geometry, 32 worlds and thermal field using prefix
 # data only. Champion remains uniform until independent gates below pass.
 FN ValidateHistory,32
+    mov qword ptr [rip+research_validation_logsum],0
+    mov qword ptr [rip+research_confirmation_logsum],0
     mov dword ptr [rip+validation_complete],0
     lea rcx,[rip+confirmation_begin]
     mov edx,offset CONFIRMATION_BYTES
@@ -128,6 +130,7 @@ FN ValidateHistory,32
     movsd [rip+evidence],xmm0
     mov qword ptr [rip+rho],0
     call BuildThermal
+    call ResearchLogFold
     call SampleMask
     mov [rip+validation_pick],rax
     mov rcx,rax
@@ -386,6 +389,8 @@ FN ValidationGates,32
     lea rdi,[rip+model_weights]
     xorpd xmm5,xmm5
 .vg_gate:
+    cmp esi,[rip+research_excluded]
+    je .vg_next
     movsd xmm0,[rbx+rsi*8]
     comisd xmm0,[rip+alpha]
     jae .vg_next
@@ -527,6 +532,7 @@ FN ConfirmPolicy,32
     test eax,eax
     jz .cp_cancel
     call BuildThermal
+    call ResearchLogConfirmation
     call SampleMask
     mov [rip+validation_pick],rax
     mov rcx,rax

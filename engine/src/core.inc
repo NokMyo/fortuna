@@ -61,6 +61,7 @@
 .equ MAX_DRAWS, 8192
 .equ RECORD_SIZE, 48
 .equ TOP_FAST, 4096
+.equ MAX_FAST,8192
 .equ TOP_FINAL, 512
 .equ MODEL_COUNT, 12
 .equ FEATURE_COUNT, 8
@@ -121,7 +122,7 @@ rho: .double 1.0
 evidence: .double 0.0
 temperature: .double 1.0
 elapsed_ms: .quad 0
-config_version: .asciz "OFA-reference-1;K=4096/512;models=12;worlds=32;null=512;seed=20260913;gate=0.05;min_train=60;min_test=30;confirmation=30;min_promote=120"
+config_version: .asciz "OFA-research-1.1;JOINT=EB-residual-45C6;caps=.05/.02/.01;shrink=.5/1/2;inner=4;outer_max=30;worlds=8..32;MC_SE=.0005;audit=512/65536;expanded=8192;forecast=FJP1/half-uniform;K=4096/512;models=12;worlds=32;null=512;seed=20260913;gate=0.05;min_train=60;min_test=30;confirmation=30;min_promote=120"
 
 .section .bss
 .p2align 4
@@ -189,8 +190,8 @@ null_masks: .skip NULL_COUNT*8
 null_models: .skip NULL_COUNT*MODEL_COUNT*8
 sort_work: .skip 8192*8
 fast_count: .skip 4
-fast_masks: .skip TOP_FAST*8
-fast_scores: .skip TOP_FAST*8
+fast_masks: .skip MAX_FAST*8
+fast_scores: .skip MAX_FAST*8
 final_count: .skip 4
 final_masks: .skip TOP_FINAL*8
 final_scores: .skip TOP_FINAL*8

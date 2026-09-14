@@ -2,13 +2,15 @@
 
 This file describes the executable shipped as **Febius Fortuna 1.0.0**. `ORACLE.md` and `ORACLE_FIELD_ARCHITECTURE.md` remain the broader design specifications, including research targets. Their historical CURRENT/REQUIRED tags are not a claim about this binary. Product version 1.0.0 does **not** claim completion of the master specification's “Production Canonical” milestone.
 
-## Independent engine distribution (application 1.1.0)
+## 현재 배포: 엔진 1.1.0 / 앱 1.3.0
 
-The unchanged reference mathematics now lives in `engine/src/` and builds into **FortunaOracle.dll 1.0.0**. The GUI executable contains no statistical models, candidate scan, SHA-256 engine or validation pipeline; `src/engine_bridge.inc` calls the public ABI and copies snapshots. DLL dependencies are only Kernel32/Advapi32. The app owns windows, dialogs, clipboard, report presentation and the choice of ledger path. See [ENGINE_API.md](ENGINE_API.md) for the versioned interface, process-local state, ownership and concurrency contract.
+아래 표는 기존 reference 수학의 기준 명세입니다. **추가된 여섯 연구 기능의 실제 계산·제한은 [RESEARCH.md](RESEARCH.md)**에 있습니다. 공동 확률 정규화, 경험적 베이지안 단계별 축소, 후보 누락 검사/확장, 완전한 성분 제거 재검증, 중첩 로그 손실/사전 예측 기록, 적응적 불확실성 분석은 연구 모드에서 실행됩니다. 기존 일반 분석과 새 연구용 공동 모형의 번호 추출을 구분합니다.
+
+계산 코드는 같은 저장소의 `engine/`에 있고 정적 라이브러리로 앱 EXE에 포함됩니다. 독립 빌드 진입점과 개발용 DLL SDK도 제공합니다. GUI는 `src/engine_bridge.inc`에서 공개 API를 호출합니다. [호출 규격](ENGINE_API.md)
 
 ## Runtime and module boundaries
 
-All application, parsing, hashing, mathematical, sampling, persistence and UI logic is x86-64 assembly. The app uses `scripts/modules.txt`; the DLL uses `engine/modules.txt`. `.rc`/manifest files contain declarative Windows resources. PowerShell, shell and Python are build/test tools only. There is no application C/C++, CRT, Python runtime, embedded browser or network client.
+All application, parsing, hashing, mathematical, sampling, persistence and UI logic is x86-64 assembly. The app uses `src/fortuna.s`; the engine uses `engine/fortuna_oracle.s` and `engine/modules.txt`. `.rc`/manifest files contain declarative Windows resources. PowerShell, shell and Python are build/test tools only. There is no application C/C++, CRT, Python runtime, embedded browser or network client.
 
 | Module | Responsibility |
 |---|---|
@@ -20,7 +22,7 @@ All application, parsing, hashing, mathematical, sampling, persistence and UI lo
 | report / ledger | Bounded UTF-8 audit report and append-only local hash chain |
 | windows / ui / strings / selftest | Unicode Win32 platform, background worker, resources, diagnostic entry points |
 
-Windows 10 1607+ x64 is the minimum because the UI uses `GetDpiForWindow`. The process is DPI aware, asInvoker, and uses ASLR, high-entropy VA, NX and x64 unwind metadata. The engine imports only Windows system DLLs; the application additionally imports FortunaOracle.dll. Native builds use clang integrated assembly, SDK `rc`, MSVC `link /nodefaultlib`. The numerical path is a deterministic reference implementation on the same build/platform; cross-toolchain bit-identical floating-point results are not promised.
+Windows 10 1607+ x64 is the minimum because the UI uses `GetDpiForWindow`. The process is DPI aware, asInvoker, and uses ASLR, high-entropy VA, NX and x64 unwind metadata. The engine imports only Windows system DLLs; the application embeds the static engine and needs no engine DLL. Native builds use clang integrated assembly, SDK `rc`, MSVC `link /nodefaultlib`. The numerical path is a deterministic reference implementation on the same build/platform; cross-toolchain bit-identical floating-point results are not promised.
 
 ## Data, identity and randomness
 
@@ -90,4 +92,4 @@ Release CI exercises the real assembly on Linux against independent Python/NumPy
 
 The native adapter only changes the calling convention and OS entropy shim. Tests are engineering checks, not evidence of lottery prediction performance. No real lottery dataset is bundled, no actual-history performance claim is made, and code signing is not included.
 
-Outstanding master-specification items include automatic official data/provider/manifests, richer structural histograms and regime/change-point models, exact per-signal null tests and triple-wise FDR, full pipeline ablation, parameter perturbation, Bayesian model averaging, drift/adaptive governance, model-disagreement composite, external prediction verification, cached incremental analysis, multi-worker scan, packed pair optimization, AVX2/AVX-512 dispatch, GPU/NUMA, determinant bundles and research/visualization interfaces. GMM/HMM/KDE and other research/extension entries remain future work. These are not silently marked complete by releasing the native reference product.
+The following historical backlog applies to the original reference path; RESEARCH.md explicitly identifies research-mode implementations. Remaining/unexpanded master-specification items include automatic official data/provider/manifests, richer structural histograms and regime/change-point models, exact per-signal null tests and triple-wise FDR, full pipeline ablation, parameter perturbation, Bayesian model averaging, drift/adaptive governance, model-disagreement composite, external prediction verification, cached incremental analysis, multi-worker scan, packed pair optimization, AVX2/AVX-512 dispatch, GPU/NUMA, determinant bundles and research/visualization interfaces. GMM/HMM/KDE and other research/extension entries remain future work. These are not silently marked complete by releasing the native reference product.

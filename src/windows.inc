@@ -167,6 +167,15 @@ FN InitStorage
     lea rcx,[rip+ledger_path]
     lea rdx,[rip+ledger_filename]
     call lstrcatW
+    lea rcx,[rip+forecast_path]
+    lea rdx,[rip+folder_path]
+    call lstrcpyW
+    lea rcx,[rip+forecast_path]
+    lea rdx,[rip+path_slash]
+    call lstrcatW
+    lea rcx,[rip+forecast_path]
+    lea rdx,[rip+forecast_filename]
+    call lstrcatW
 .is_out: END
 
 FN Notify
