@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- Extract all ORACLE analysis, randomness, reports and sealing into the independent pure-assembly FortunaOracle.dll 1.0.0.
+- Make the native GUI a client of a versioned public ABI; no engine globals or analysis code are embedded in the GUI.
+- Add caller-owned snapshots, buffer size negotiation, concurrent-call isolation, progress and cancellation.
+- Ship a standalone engine SDK with import library, ABI header, export list and assembly example.
+- Add direct DLL and separate-client Windows tests, retain core regression tests, and package both required runtime files together.
+
 ## 1.0.0
 
 - Replace the prototype with a modular, pure x64 assembly ORACLE reference engine and classic Korean native Windows UI.

@@ -1,13 +1,13 @@
-Windows용 Febius Fortuna 1.0.0입니다. Windows 10 1607 이상 / Windows 11 x64를 지원합니다.
+Febius Fortuna 1.1.0 — 독립 Fortuna ORACLE Engine
 
-- x86-64 어셈블리어로 작성한 단일 실행 파일. 별도 C/C++ 런타임이나 설치가 필요 없습니다.
-- Febius 계열의 클래식 회색 Win32 화면, 한글 메뉴, 1·5·10게임 생성과 복사·저장.
-- ORACLE 전수 탐색, Bayesian·시간·pair/triple·spectral·구조 분석, 이웃 및 가상 이력 안정성 계산.
-- 회차별 백테스트와 별도 30회차 확인을 통과한 경우에만 가중 정책 활성화. 근거가 부족하면 균등 생성.
-- 데이터·설정·후보장 SHA-256, 상세 보고서, 로컬 공식 번호 봉인.
+- 계산부를 **FortunaOracle.dll 1.0.0**으로 실제 분리했습니다. 앱과 별도 파일·별도 버전으로 관리합니다.
+- 앱 없이도 공개 ABI를 통해 CSV 분석, 번호 생성, 보고서와 봉인 기능을 사용할 수 있습니다.
+- 앱과 엔진 모두 x86-64 어셈블리어이며 C/C++ 런타임은 사용하지 않습니다. 엔진은 GUI 라이브러리에 의존하지 않습니다.
+- 독립 SDK에 DLL, import library, 호출 규격 헤더, 어셈블리 사용 예제를 제공합니다.
+- 기존 클래식 화면을 유지하고 별도의 엔진 정보 창을 추가했습니다.
 
-`FebiusFortuna.exe`는 바로 실행할 수 있습니다. ZIP에는 실행 파일, 사용 설명서, 구현 명세와 **가상 CSV 예제**가 포함됩니다. `SHA256SUMS.txt`로 파일을 확인할 수 있습니다.
+**일반 사용자는 앱 ZIP을 다운로드해 압축을 풀어 주세요. `FebiusFortuna.exe`와 `FortunaOracle.dll`을 같은 폴더에 두어야 합니다.** SDK ZIP은 다른 프로그램에 엔진을 연결할 개발자용입니다.
 
-프로그램 1.0.0은 ORACLE reference 구현입니다. 설계 문서의 자동 데이터 공급, GMM/HMM, 고급 ablation, AVX/GPU, 외부 공증 등 모든 장기 항목을 완료한 버전은 아닙니다. 정확한 범위는 [구현 명세](https://github.com/NokMyo/fortuna/blob/main/docs/IMPLEMENTATION.md)에 정리했습니다.
+Windows 앱·독립 DLL·별도 어셈블리 클라이언트 실행 검사와 수학 회귀 검증을 거친 패키지입니다. 호출 규격은 [ENGINE_API.md](https://github.com/NokMyo/fortuna/blob/main/docs/ENGINE_API.md)에 정리했습니다. 기존 1.0.0 릴리스는 유지합니다.
 
-오라클 지수와 내부 샘플링 확률은 실제 당첨확률이 아닙니다. 공정한 추첨에서 모든 조합의 1등 확률은 같습니다.
+이번 변경은 엔진 독립화입니다. 분석 방식의 기존 한계와 미구현 연구·확장 항목은 그대로 적용됩니다.

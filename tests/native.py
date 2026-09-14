@@ -7,7 +7,7 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 MODULES=['core','hash','data','stats','linalg','models','field','robust','sample','validation','report']
 def build(extra=()):
     modules=MODULES+list(extra)
-    source='.intel_syntax noprefix\n'+ '\n'.join((ROOT/f'src/{m}.inc').read_text() for m in modules)
+    source='.intel_syntax noprefix\n'+ '\n'.join((ROOT/f'engine/src/{m}.inc').read_text() for m in modules)
     source=source.replace('.section .rdata,"dr"','.section .data')
     source+='''\n.section .text
 FN SystemFunction036

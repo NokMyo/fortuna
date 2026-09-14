@@ -2,9 +2,13 @@
 
 This file describes the executable shipped as **Febius Fortuna 1.0.0**. `ORACLE.md` and `ORACLE_FIELD_ARCHITECTURE.md` remain the broader design specifications, including research targets. Their historical CURRENT/REQUIRED tags are not a claim about this binary. Product version 1.0.0 does **not** claim completion of the master specification's “Production Canonical” milestone.
 
+## Independent engine distribution (application 1.1.0)
+
+The unchanged reference mathematics now lives in `engine/src/` and builds into **FortunaOracle.dll 1.0.0**. The GUI executable contains no statistical models, candidate scan, SHA-256 engine or validation pipeline; `src/engine_bridge.inc` calls the public ABI and copies snapshots. DLL dependencies are only Kernel32/Advapi32. The app owns windows, dialogs, clipboard, report presentation and the choice of ledger path. See [ENGINE_API.md](ENGINE_API.md) for the versioned interface, process-local state, ownership and concurrency contract.
+
 ## Runtime and module boundaries
 
-All application, parsing, hashing, mathematical, sampling, persistence and UI logic is x86-64 assembly. `fortuna.s` includes the modules listed in `scripts/modules.txt`. `.rc`/manifest files contain declarative Windows resources. PowerShell, shell and Python are build/test tools only. There is no application C/C++, CRT, Python runtime, embedded browser or network client.
+All application, parsing, hashing, mathematical, sampling, persistence and UI logic is x86-64 assembly. The app uses `scripts/modules.txt`; the DLL uses `engine/modules.txt`. `.rc`/manifest files contain declarative Windows resources. PowerShell, shell and Python are build/test tools only. There is no application C/C++, CRT, Python runtime, embedded browser or network client.
 
 | Module | Responsibility |
 |---|---|

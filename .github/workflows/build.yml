@@ -1,4 +1,4 @@
-name: Windows 1.0 release
+name: Windows app and independent ORACLE engine
 on:
   push:
     branches: [main, 'codex/**']
@@ -39,6 +39,8 @@ jobs:
           name: fortuna-windows-x64
           path: |
             build/FebiusFortuna.exe
+            build/FortunaOracle.dll
+            build/FortunaOracle.lib
             build/fortuna-windows.png
             build/gui-tickets.txt
             build/imports.txt
@@ -61,14 +63,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          engine_version=$(tr -d '\r\n' < engine/VERSION)
           version=$(tr -d '\r\n' < VERSION)
           if gh release view "v$version" >/dev/null 2>&1; then
             echo "Release v$version already exists; retaining immutable release."
             exit 0
           fi
           gh release create "v$version" \
-            release-files/build/FebiusFortuna.exe \
+            release-files/build/FortunaOracle.dll \
             "release-files/dist/FebiusFortuna-$version-windows-x64.zip" \
+            "release-files/dist/FortunaOracle-Engine-$engine_version-windows-x64-sdk.zip" \
             release-files/dist/SHA256SUMS.txt \
             --target "$GITHUB_SHA" --title "Febius Fortuna $version" \
             --notes-file docs/RELEASE_NOTES.md --latest

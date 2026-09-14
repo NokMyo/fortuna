@@ -1,4 +1,6 @@
-# Febius Fortuna 1.0.0 사용 설명서
+# Febius Fortuna 1.1.0 사용 설명서
+
+앱 1.1.0과 독립 엔진 1.0.0을 함께 제공합니다. ZIP을 풀고 `FebiusFortuna.exe`와 `FortunaOracle.dll`을 같은 폴더에 두세요. 엔진 DLL만 사용하는 개발자는 [호출 규격](ENGINE_API.md)을 참고하세요.
 
 ## 시작하기
 

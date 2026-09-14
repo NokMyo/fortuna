@@ -1,14 +1,16 @@
-# Febius Fortuna 1.0.0
+# Febius Fortuna 1.1.0
 
 **Windows 클래식 로또 6/45 번호 생성기 · ORACLE Field Architecture**
 
-[Windows 릴리스](https://github.com/NokMyo/fortuna/releases/tag/v1.0.0) · [사용 설명서](docs/USER_GUIDE.md) · [실제 구현 명세](docs/IMPLEMENTATION.md)
+[Windows 릴리스](https://github.com/NokMyo/fortuna/releases/tag/v1.1.0) · [사용 설명서](docs/USER_GUIDE.md) · [실제 구현 명세](docs/IMPLEMENTATION.md)
+
+**독립 엔진:** `FortunaOracle.dll` (Fortuna ORACLE Engine 1.0.0, ABI 1.0). 앱은 DLL의 공개 함수만 호출합니다. [SDK와 호출 규격](docs/ENGINE_API.md)
 
 프로그램 전체 로직은 **x86-64 어셈블리어**입니다. C/C++ 런타임 없이 Win32 API를 직접 호출합니다. Febius Downrush의 유틸리티 디자인 방향에 맞춰 회색 기본 창, 네이티브 메뉴, 사각 버튼과 명확한 번호 표시를 사용합니다.
 
 ## 실행
 
-Windows 10 1607 이상 또는 Windows 11, x64 환경에서 `FebiusFortuna.exe`를 실행합니다. 설치나 관리자 권한, 별도 런타임이 필요 없습니다. ZIP에는 설명서와 **가상 데이터** 예제가 포함됩니다. 실제 추첨 기록은 포함하지 않습니다.
+Windows 10 1607 이상 또는 Windows 11, x64 환경에서 `FebiusFortuna.exe`를 실행합니다. 실행 파일과 `FortunaOracle.dll`을 같은 폴더에 두세요. 설치나 관리자 권한, 별도 런타임이 필요 없습니다. ZIP에는 설명서와 **가상 데이터** 예제가 포함됩니다. 실제 추첨 기록은 포함하지 않습니다.
 
 1. 데이터 없이 **번호 생성 / 5게임 / 10게임**을 바로 사용합니다.
 2. 과거 회차 CSV를 불러옵니다. 분석에는 연속된 60회차 이상이 필요합니다.
@@ -45,4 +47,4 @@ GitHub Actions는 실제 Windows 빌드·자체 검사·한글 경로·GUI 제�
 - [ORACLE.md](docs/ORACLE.md), [ORACLE_FIELD_ARCHITECTURE.md](docs/ORACLE_FIELD_ARCHITECTURE.md): 전체 설계와 장기 연구 명세
 - [FORMAT.md](data/FORMAT.md): 입력 데이터 계약
 
-**제품 버전 1.0.0은 설계 문서의 모든 장기 연구 항목 완료를 의미하지 않습니다.** 자동 데이터 공급, 고차 모형, AVX/GPU 가속, 외부 타임스탬프 등 미구현 항목은 구현 명세에 명시합니다.
+**제품 버전 1.1.0은 설계 문서의 모든 장기 연구 항목 완료를 의미하지 않습니다.** 자동 데이터 공급, 고차 모형, AVX/GPU 가속, 외부 타임스탬프 등 미구현 항목은 구현 명세에 명시합니다.

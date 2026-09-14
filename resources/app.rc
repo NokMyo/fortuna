@@ -9,7 +9,7 @@ FONT 9, "Malgun Gothic", 400, 0, 1
 BEGIN
     LTEXT "FEBIUS  /  UTILITY SERIES", -1, 12, 9, 400, 12
     LTEXT "Fortuna", 1100, 12, 23, 260, 29
-    RTEXT "ORACLE  ·  LOTTO 6/45\nVERSION 1.0.0", -1, 398, 24, 180, 25
+    RTEXT "Fortuna ORACLE Engine\nVERSION 1.1.0", -1, 398, 24, 180, 25
     CONTROL "", -1, "STATIC", SS_ETCHEDHORZ, 12, 58, 566, 1
     GROUPBOX "생성한 번호", -1, 12, 67, 354, 190
     LTEXT "--   --   --   --   --   --", 1101, 24, 84, 330, 37, SS_CENTER | SS_CENTERIMAGE
@@ -63,6 +63,7 @@ BEGIN
     BEGIN
         MENUITEM "사용 설명서", 1015
         MENUITEM "GitHub 릴리스", 1016
+        MENUITEM "Fortuna ORACLE Engine 정보", 1018
         MENUITEM "정보", 1017
     END
 END
@@ -72,13 +73,13 @@ CAPTION "Febius Fortuna 정보"
 FONT 9,"Malgun Gothic"
 BEGIN
     LTEXT "FEBIUS  /  UTILITY SERIES", -1,12,12,270,12
-    LTEXT "Febius Fortuna 1.0.0",-1,12,33,270,20
+    LTEXT "Febius Fortuna 1.1.0",-1,12,33,270,20
     LTEXT "분석적 무작위 번호 생성기\nWindows x64 · Assembly · CRT 비의존\n\nORACLE Field Architecture\n© 2026 nokmyo. All rights reserved.",-1,12,57,275,66
     DEFPUSHBUTTON "확인",IDOK,230,128,58,18
 END
 1 VERSIONINFO
-FILEVERSION 1,0,0,0
-PRODUCTVERSION 1,0,0,0
+FILEVERSION 1,1,0,0
+PRODUCTVERSION 1,1,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0
 FILEOS VOS_NT_WINDOWS32
@@ -90,12 +91,12 @@ BEGIN
   BEGIN
    VALUE "CompanyName", "Febius\0"
    VALUE "FileDescription", "Febius Fortuna\0"
-   VALUE "FileVersion", "1.0.0\0"
+   VALUE "FileVersion", "1.1.0\0"
    VALUE "InternalName", "FebiusFortuna\0"
    VALUE "LegalCopyright", "© 2026 nokmyo. All rights reserved.\0"
    VALUE "OriginalFilename", "FebiusFortuna.exe\0"
    VALUE "ProductName", "Febius Fortuna\0"
-   VALUE "ProductVersion", "1.0.0\0"
+   VALUE "ProductVersion", "1.1.0\0"
   END
  END
  BLOCK "VarFileInfo"
@@ -104,3 +105,14 @@ BEGIN
  END
 END
 1 24 "resources/app.manifest"
+
+301 DIALOGEX 0,0,320,170
+STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Fortuna ORACLE Engine"
+FONT 9,"Malgun Gothic"
+BEGIN
+ LTEXT "FORTUNA  /  ORACLE ENGINE",-1,12,12,296,16
+ LTEXT "Engine 1.0.0  ·  ABI 1.0  ·  Windows x64",-1,12,36,296,16
+ LTEXT "독립 분석 라이브러리: FortunaOracle.dll\n\n어셈블리어 · 통계 분석 · 전수 탐색 · 순차 검증\n\n앱과 독립된 호출 규격으로 다른 프로그램에서도\n동일한 오라클 엔진을 사용할 수 있습니다.",-1,12,60,296,72
+ DEFPUSHBUTTON "확인",IDOK,248,142,60,18
+END

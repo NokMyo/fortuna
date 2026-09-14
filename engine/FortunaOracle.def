@@ -1,0 +1,16 @@
+LIBRARY FortunaOracle
+EXPORTS
+    FortunaOracleGetAbiVersion
+    FortunaOracleGetEngineVersion
+    FortunaOracleInitialize
+    FortunaOracleLoadCsv
+    FortunaOracleLoadCsvFileW
+    FortunaOracleAnalyze
+    FortunaOracleCancel
+    FortunaOracleGenerate
+    FortunaOracleGetSnapshot
+    FortunaOracleGetProgress
+    FortunaOracleGetReport
+    FortunaOracleSealW
+    FortunaOracleUseUniform
+    FortunaOracleSelfTest

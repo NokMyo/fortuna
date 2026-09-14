@@ -2,14 +2,12 @@ FN WinMainCRTStartup,32
     xor ecx,ecx
     call GetModuleHandleW
     mov [rip+h_instance],rax
-    lea rcx,[rip+config_version]
-    xor edx,edx
-1:  cmp byte ptr [rcx+rdx],0
-    je 2f
-    inc edx
-    jmp 1b
-2:  lea r8,[rip+hash_config]
-    call Sha256
+    call FortunaOracleGetAbiVersion
+    cmp eax,0x10000
+    jne .entry_engine_error
+    call FortunaOracleInitialize
+    test eax,eax
+    jnz .entry_engine_error
     call InitStorage
     call GetCommandLineW
     mov rcx,rax
@@ -59,6 +57,14 @@ FN WinMainCRTStartup,32
     test eax,eax
     jz .entry_error
     xor ecx,ecx
+    call ExitProcess
+.entry_engine_error:
+    xor ecx,ecx
+    lea rdx,[rip+text_startup_fail]
+    lea r8,[rip+app_title]
+    mov r9d,0x10
+    call MessageBoxW
+    mov ecx,3
     call ExitProcess
 .entry_bad_args:
     mov ecx,2
@@ -219,6 +225,8 @@ FN DialogProc,128
     je .dp_close
     cmp eax,ID_CANCEL
     je .dp_cancel
+    cmp eax,1018
+    je .dp_engine_info
     cmp eax,ID_ABOUT
     je .dp_about
     cmp eax,ID_RELEASES
@@ -344,6 +352,7 @@ FN DialogProc,128
     call Alert
     jmp .dp_true
 .dp_cancel:
+    call FortunaOracleCancel
     mov dword ptr [rip+cancel_flag],1
     jmp .dp_true
 .dp_copy:
@@ -420,6 +429,8 @@ FN DialogProc,128
     call OpenPath
     jmp .dp_true
 .dp_uniform:
+    call FortunaOracleUseUniform
+    call RefreshEngineState
     mov dword ptr [rip+field_ready],0
     movsd xmm0,[rip+one]
     movsd [rip+rho],xmm0
@@ -446,9 +457,13 @@ FN DialogProc,128
     lea rcx,[rip+text_seal_fail]
     call Alert
     jmp .dp_true
+.dp_engine_info:
+    mov edx,301
+    jmp .dp_show_about
 .dp_about:
-    mov rcx,[rip+h_instance]
     mov edx,300
+.dp_show_about:
+    mov rcx,[rip+h_instance]
     mov r8,rbx
     lea r9,[rip+AboutProc]
     mov qword ptr [rsp+32],0
@@ -470,6 +485,7 @@ FN DialogProc,128
     jae .dp_close
 1:  cmp dword ptr [rip+analysis_busy],1
     jne .dp_true
+    call ReadEngineProgress
     mov eax,[rip+validation_count]
     mov [rsp+32],rax
     mov eax,[rip+history_count]
@@ -521,6 +537,7 @@ FN DialogProc,128
 .dp_close:
     cmp dword ptr [rip+analysis_busy],1
     jne .dp_destroy
+    call FortunaOracleCancel
     mov dword ptr [rip+cancel_flag],1
     mov dword ptr [rip+close_after],1
     jmp .dp_true
