@@ -555,7 +555,9 @@ FN DialogProc,128
 .dp_true: mov eax,1
 .dp_out: END 128
 
-FN AboutProc
+FN AboutProc,16
+    cmp edx,0x110
+    je .about_init
     cmp edx,0x111
     je 1f
     cmp edx,0x10
@@ -565,7 +567,30 @@ FN AboutProc
     mov eax,1
     jmp 3f
 2:  xor eax,eax
-3:  END
+    jmp 3f
+.about_init:
+    call EngineAboutInit
+3:  END 16
+
+FN EngineAboutInit,16
+    mov rbx,rcx
+    call FortunaOracleGetEngineVersion
+    mov r8d,eax
+    shr r8d,16
+    mov r9d,eax
+    shr r9d,8
+    and r9d,255
+    and eax,255
+    mov [rsp+32],rax
+    lea rcx,[rip+engine_about_text]
+    lea rdx,[rip+fmt_engine_version]
+    call wsprintfW
+    mov rcx,rbx
+    mov edx,1201
+    lea r8,[rip+engine_about_text]
+    call SetDlgItemTextW
+    mov eax,1
+    END 16
 FN AnalysisThread
     call GetTickCount64
     mov rbx,rax

@@ -406,7 +406,7 @@ FN Random64,16
 2:  lea rcx,[rsp+32]
     mov edx,8
     call SystemFunction036
-    test eax,eax
+    test al,al
     jnz 3f
     mov dword ptr [rip+rng_error],1
     xor eax,eax

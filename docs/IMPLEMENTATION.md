@@ -20,7 +20,7 @@ All application, parsing, hashing, mathematical, sampling, persistence and UI lo
 | report / ledger | Bounded UTF-8 audit report and append-only local hash chain |
 | windows / ui / strings / selftest | Unicode Win32 platform, background worker, resources, diagnostic entry points |
 
-Windows 10 1607+ x64 is the minimum because the UI uses `GetDpiForWindow`. The process is DPI aware, asInvoker, and uses ASLR, high-entropy VA, NX and x64 unwind metadata. Only Windows system DLLs are imported. Native builds use clang integrated assembly, SDK `rc`, MSVC `link /nodefaultlib`. The numerical path is a deterministic reference implementation on the same build/platform; cross-toolchain bit-identical floating-point results are not promised.
+Windows 10 1607+ x64 is the minimum because the UI uses `GetDpiForWindow`. The process is DPI aware, asInvoker, and uses ASLR, high-entropy VA, NX and x64 unwind metadata. The engine imports only Windows system DLLs; the application additionally imports FortunaOracle.dll. Native builds use clang integrated assembly, SDK `rc`, MSVC `link /nodefaultlib`. The numerical path is a deterministic reference implementation on the same build/platform; cross-toolchain bit-identical floating-point results are not promised.
 
 ## Data, identity and randomness
 

@@ -9,7 +9,7 @@ FONT 9, "Malgun Gothic", 400, 0, 1
 BEGIN
     LTEXT "FEBIUS  /  UTILITY SERIES", -1, 12, 9, 400, 12
     LTEXT "Fortuna", 1100, 12, 23, 260, 29
-    RTEXT "Fortuna ORACLE Engine\nVERSION 1.1.0", -1, 398, 24, 180, 25
+    RTEXT "Powered by Fortuna ORACLE Engine\nAPP 1.1.0", -1, 398, 24, 180, 25
     CONTROL "", -1, "STATIC", SS_ETCHEDHORZ, 12, 58, 566, 1
     GROUPBOX "생성한 번호", -1, 12, 67, 354, 190
     LTEXT "--   --   --   --   --   --", 1101, 24, 84, 330, 37, SS_CENTER | SS_CENTERIMAGE
@@ -112,7 +112,7 @@ CAPTION "Fortuna ORACLE Engine"
 FONT 9,"Malgun Gothic"
 BEGIN
  LTEXT "FORTUNA  /  ORACLE ENGINE",-1,12,12,296,16
- LTEXT "Engine 1.0.0  ·  ABI 1.0  ·  Windows x64",-1,12,36,296,16
+ LTEXT "Engine 1.0.0  ·  ABI 1.0  ·  Windows x64",1201,12,36,296,16
  LTEXT "독립 분석 라이브러리: FortunaOracle.dll\n\n어셈블리어 · 통계 분석 · 전수 탐색 · 순차 검증\n\n앱과 독립된 호출 규격으로 다른 프로그램에서도\n동일한 오라클 엔진을 사용할 수 있습니다.",-1,12,60,296,72
  DEFPUSHBUTTON "확인",IDOK,248,142,60,18
 END

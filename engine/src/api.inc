@@ -14,7 +14,7 @@ FN FortunaOracleGetEngineVersion
 FN ApiLock
     lea rcx,[rip+api_lock]
     call TryAcquireSRWLockExclusive
-    test eax,eax
+    test al,al
     jz .al_busy
     cmp dword ptr [rip+api_initialized],1
     je .al_ok
@@ -34,7 +34,7 @@ FN ApiFinish
 FN FortunaOracleInitialize
     lea rcx,[rip+api_lock]
     call TryAcquireSRWLockExclusive
-    test eax,eax
+    test al,al
     jz .init_busy
     cmp dword ptr [rip+api_initialized],1
     je .init_ok
