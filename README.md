@@ -1,8 +1,8 @@
-# Febius Fortuna 1.4.0
+# Febius Fortuna 1.4.1
 
 **Windows 클래식 로또 6/45 번호 생성기 · ORACLE Field Architecture**
 
-[Windows 릴리스](https://github.com/NokMyo/fortuna/releases/tag/v1.4.0) · [사용 설명서](docs/USER_GUIDE.md) · [실제 구현 명세](engine/docs/IMPLEMENTATION.md)
+[Windows 릴리스](https://github.com/NokMyo/fortuna/releases/tag/v1.4.1) · [사용 설명서](docs/USER_GUIDE.md) · [실제 구현 명세](engine/docs/IMPLEMENTATION.md)
 
 **엔진 전용 폴더:** [`engine/`](engine/)에 Fortuna ORACLE Engine 1.2.0의 소스·문서·테스트·SDK를 모았습니다. 앱은 공개 API로 연결하며, 빌드할 때 엔진을 실행 파일에 포함합니다. [SDK와 호출 규격](engine/docs/ENGINE_API.md)
 
@@ -60,7 +60,7 @@ build\FebiusFortuna.exe --analyze engine\data\SYNTHETIC-example.csv build\report
 
 Linux에서는 MinGW binutils/headers/libraries와 GCC가 있으면 `sh scripts/build-linux.sh`로 교차 빌드합니다. `python engine/tests/native.py`, `python engine/tests/engine.py`, `python engine/tests/research.py`는 동일 어셈블리 코어를 독립적인 Python/NumPy 기준과 대조합니다. Python과 PowerShell은 개발·검증 도구이며 실행 파일에 포함되지 않습니다.
 
-GitHub Actions는 실제 Windows 빌드·자체 검사·한글 경로·GUI 제어·화면 캡처와 Linux 수학 검증을 통과한 동일 실행 파일을 패키징합니다. `main`에서 모든 작업이 성공하면 `VERSION`에 해당하는 릴리스를 생성합니다. 기존 버전의 태그나 첨부 파일은 자동으로 덮어쓰지 않습니다.
+GitHub Actions는 실제 Windows 빌드·자체 검사·한글 경로·GUI 제어·화면 캡처와 Linux 수학 검증을 통과한 동일 실행 파일을 패키징합니다. `main`에서 모든 작업이 성공하면 `VERSION`에 해당하는 릴리스를 생성하고, 그보다 낮은 기존 GitHub Release는 정리합니다.
 
 ## 설계 문서
 
@@ -69,7 +69,7 @@ GitHub Actions는 실제 Windows 빌드·자체 검사·한글 경로·GUI 제�
 - [ORACLE.md](engine/docs/ORACLE.md), [ORACLE_FIELD_ARCHITECTURE.md](engine/docs/ORACLE_FIELD_ARCHITECTURE.md): 전체 설계와 장기 연구 명세
 - [FORMAT.md](engine/data/FORMAT.md): 입력 데이터 계약
 
-**제품 버전 1.4.0은 설계 문서의 모든 장기 연구 항목 완료를 의미하지 않습니다.** 자동 데이터 공급, 고차 모형, AVX/GPU 가속, 외부 타임스탬프 등 미구현 항목은 구현 명세에 명시합니다.
+**제품 버전 1.4.1은 설계 문서의 모든 장기 연구 항목 완료를 의미하지 않습니다.** 자동 데이터 공급, 고차 모형, AVX/GPU 가속, 외부 타임스탬프 등 미구현 항목은 구현 명세에 명시합니다.
 
 ## 추첨 방식과 구현 언어
 
