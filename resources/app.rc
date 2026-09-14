@@ -128,3 +128,20 @@ BEGIN
  LTEXT "Fortuna ORACLE Engine — 프로그램 내장\n\n어셈블리어 · 통계 분석 · 전수 탐색 · 순차 검증\n\n앱과 독립된 호출 규격으로 다른 프로그램에서도\n동일한 오라클 엔진을 사용할 수 있습니다.",-1,12,60,296,72
  DEFPUSHBUTTON "확인",IDOK,248,142,60,18
 END
+
+302 DIALOGEX 0,0,330,210
+STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Febius Account 로그인"
+FONT 9,"Malgun Gothic"
+BEGIN
+    LTEXT "FEBIUS  /  ACCOUNT",-1,14,12,300,12
+    LTEXT "Fortuna를 사용하려면 Febius Account의 유효한 라이선스가 필요합니다.",-1,14,31,300,26
+    GROUPBOX "기기 승인",-1,14,62,302,79
+    LTEXT "승인 코드",-1,28,79,70,12
+    CTEXT "--------",1300,101,76,118,22,SS_CENTER | SS_CENTERIMAGE | WS_BORDER
+    PUSHBUTTON "Febius Account 열기",1302,225,76,78,22
+    LTEXT "",1301,28,108,274,25
+    LTEXT "브라우저에서 로그인 후 Fortuna 사용을 승인하면 프로그램이 자동으로 확인합니다.",-1,14,149,302,28
+    DEFPUSHBUTTON "승인 확인",IDOK,174,181,68,19
+    PUSHBUTTON "종료",IDCANCEL,248,181,68,19
+END
