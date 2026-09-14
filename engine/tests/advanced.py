@@ -34,7 +34,6 @@ history=(C.c_ubyte*(8192*48)).in_dll(lib,'history')
 C.memset(C.addressof(history),0,C.sizeof(history))
 for i in range(64):
     nums=sorted({(i*7+j*8)%45 for j in range(6)})
-    # Repair the rare modular collision deterministically.
     while len(nums)<6:
         x=(nums[-1]+1)%45 if nums else 0
         if x not in nums: nums.append(x); nums.sort()
@@ -71,4 +70,36 @@ p=C.c_double.in_dll(lib,'advanced_null_p').value
 ns=C.c_double.in_dll(lib,'advanced_null_support').value
 assert 0.0<=p<=1.0 and 0.0<=ns<=1.0
 
-print('PASS AEL quad combinadic/counting, prefix walk-forward, temporal stability, synthetic-null bounds')
+# Hierarchical uncertainty can only shrink learned evidence and move rho toward uniform.
+weights=(C.c_double*12).in_dll(lib,'model_weights')
+qvalues=(C.c_double*12).in_dll(lib,'model_qvalue')
+unc=(C.c_double*12).in_dll(lib,'advanced_model_uncertainty')
+for i in range(11):
+    weights[i]=0.1+i*0.01
+    qvalues[i]=0.01+i*0.005
+before=list(weights[:11])
+scalar(lib,'validation_count').value=120
+C.c_double.in_dll(lib,'advanced_null_support').value=0.8
+C.c_double.in_dll(lib,'advanced_temporal_stability').value=0.75
+C.c_double.in_dll(lib,'evidence').value=1.0
+C.c_double.in_dll(lib,'rho').value=0.25
+assert fn(lib,'AdvancedShrinkWeights',(),C.c_uint64)()==1
+assert all(0.0<=weights[i]<=before[i]+1e-15 for i in range(11))
+assert all(0.0<=unc[i]<=1.0 for i in range(11))
+assert 0.0<=C.c_double.in_dll(lib,'evidence').value<=1.0
+assert 0.25<=C.c_double.in_dll(lib,'rho').value<=1.0
+
+# Fourth-order contribution is separately capped, with deep mode allowed a wider bound.
+C.c_double.in_dll(lib,'advanced_quad_support').value=1.0
+C.c_double.in_dll(lib,'advanced_null_support').value=1.0
+C.c_double.in_dll(lib,'advanced_temporal_stability').value=1.0
+scalar(lib,'advanced_mode').value=0
+assert fn(lib,'AdvancedSetQuadWeight',(),C.c_uint64)()==1
+normal_cap=C.c_double.in_dll(lib,'advanced_quad_weight').value
+scalar(lib,'advanced_mode').value=1
+assert fn(lib,'AdvancedSetQuadWeight',(),C.c_uint64)()==1
+deep_cap=C.c_double.in_dll(lib,'advanced_quad_weight').value
+assert math.isclose(normal_cap,0.08,abs_tol=1e-12)
+assert math.isclose(deep_cap,0.15,abs_tol=1e-12)
+
+print('PASS AEL quad model, prefix walk-forward, temporal/null validation, uncertainty shrinkage and caps')
