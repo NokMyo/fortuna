@@ -5,5 +5,6 @@
 .include "src/app_util.inc"
 .include "src/strings.inc"
 .include "src/windows.inc"
+.include "src/auth.inc"
 .include "src/engine_bridge.inc"
 .include "src/ui.inc"
