@@ -9,7 +9,7 @@ FONT 9, "Malgun Gothic", 400, 0, 1
 BEGIN
     LTEXT "FEBIUS  /  UTILITY SERIES", -1, 12, 9, 400, 12
     LTEXT "Fortuna", 1100, 12, 23, 260, 29
-    RTEXT "Powered by Fortuna ORACLE Engine\nAPP 1.4.1", -1, 398, 24, 180, 25
+    RTEXT "Powered by Fortuna ORACLE Engine\nAPP 1.4.2", -1, 398, 24, 180, 25
     CONTROL "", -1, "STATIC", SS_ETCHEDHORZ, 12, 58, 566, 1
     GROUPBOX "생성한 번호", -1, 12, 67, 354, 190
     LTEXT "--   --   --   --   --   --", 1101, 24, 84, 330, 37, SS_CENTER | SS_CENTERIMAGE
@@ -85,13 +85,13 @@ CAPTION "Febius Fortuna 정보"
 FONT 9,"Malgun Gothic"
 BEGIN
     LTEXT "FEBIUS  /  UTILITY SERIES", -1,12,12,270,12
-    LTEXT "Febius Fortuna 1.4.1",-1,12,33,270,20
+    LTEXT "Febius Fortuna 1.4.2",-1,12,33,270,20
     LTEXT "분석적 무작위 번호 생성기\nWindows x64 · Assembly · CRT 비의존\n\nORACLE Field Architecture\n© 2026 nokmyo. All rights reserved.",-1,12,57,275,66
     DEFPUSHBUTTON "확인",IDOK,230,128,58,18
 END
 1 VERSIONINFO
-FILEVERSION 1,4,1,0
-PRODUCTVERSION 1,4,1,0
+FILEVERSION 1,4,2,0
+PRODUCTVERSION 1,4,2,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0
 FILEOS VOS_NT_WINDOWS32
@@ -103,12 +103,12 @@ BEGIN
   BEGIN
    VALUE "CompanyName", "Febius\0"
    VALUE "FileDescription", "Febius Fortuna\0"
-   VALUE "FileVersion", "1.4.1\0"
+   VALUE "FileVersion", "1.4.2\0"
    VALUE "InternalName", "FebiusFortuna\0"
    VALUE "LegalCopyright", "© 2026 nokmyo. All rights reserved.\0"
    VALUE "OriginalFilename", "FebiusFortuna.exe\0"
    VALUE "ProductName", "Febius Fortuna\0"
-   VALUE "ProductVersion", "1.4.1\0"
+   VALUE "ProductVersion", "1.4.2\0"
   END
  END
  BLOCK "VarFileInfo"
