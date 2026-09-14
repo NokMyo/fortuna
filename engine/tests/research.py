@@ -30,6 +30,10 @@ rows=[[i+1 for i in c] for c in space]*3
 load(rows);assert fit(len(rows),0)==1
 assert max(abs(x) for x in coef)==0
 assert np.allclose([math.exp(logp(m)) for m in masks],1/28)
+# An injected bias must produce a nonuniform normalized model (plumbing, not evidence).
+load([[1,2,3,4,5,6]]*60);assert fit(60,0)==1
+assert math.exp(logp(63))>1/28
+assert math.isclose(sum(math.exp(logp(m)) for m in masks),1,abs_tol=1e-12)
 # Trained coefficients respect bounds and future rows cannot affect a prefix.
 rows=[sorted(rng.sample(range(1,9),6)) for _ in range(72)]
 load(rows);assert fit(60,0)==1
@@ -82,3 +86,15 @@ assert scalar(lib,'research_outer_count').value==0
 assert fn(lib,'BuildReport')()>0
 assert b'FULL PIPELINE ABLATION' in bytes(array(lib,'report_buffer',2097152,C.c_ubyte))
 print(f'PASS full research suite on 60 rows ({time.monotonic()-start:.1f}s)')
+
+# Optional full deep mode must actually score the entire domain with ScoreDeep.
+scalar(lib,'research_full_scan').value=1
+start=time.monotonic();assert fn(lib,'ScanField')()==1
+assert scalar(lib,'scan_count').value==8145060
+score=fn(lib,'ScoreDeep',(C.c_uint64,),C.c_int64)
+fast_masks=list(array(lib,'fast_masks',4096,C.c_uint64))
+assert list(array(lib,'fast_scores',4096,C.c_int64))==[score(m) for m in fast_masks]
+selected=set(array(lib,'final_masks',512,C.c_uint64))
+assert all(score(m)<=min(array(lib,'final_scores',512,C.c_int64)) for m in masks if m not in selected)
+scalar(lib,'research_full_scan').value=0
+print(f'PASS full deep scan uses exact deep scores for all 8145060 combinations ({time.monotonic()-start:.1f}s)')

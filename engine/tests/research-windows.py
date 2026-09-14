@@ -14,7 +14,7 @@ assert research(2)==-1 and joint(63,pair)==-4
 assert joint(0,pair)==-1 and joint(1<<45,pair)==-1
 assert snapshot(state,127)==-1
 rng=random.Random(827)
-rows=[sorted(rng.sample(range(1,46),6)) for _ in range(61)]
+rows=[([1,2,3,4,5,6] if i<60 and i%4 else sorted(rng.sample(range(1,46),6))) for i in range(61)]
 def csv(rows):return ('round,n1,n2,n3,n4,n5,n6\n'+''.join(str(i+2001)+','+','.join(map(str,r))+'\n' for i,r in enumerate(rows))).encode()
 raw=csv(rows[:60]);assert load(raw,len(raw))==0
 assert research(0)==0
