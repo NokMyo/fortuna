@@ -40,6 +40,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Engine API tests failed' }
           python engine/tests/research-windows.py
           if ($LASTEXITCODE -ne 0) { throw 'Research API tests failed' }
+          dumpbin /disasm engine/build/FortunaOracle.dll > build/engine-disassembly.txt
           python engine/tests/integrated-windows.py
           if ($LASTEXITCODE -ne 0) { throw 'Integrated ten-function API tests failed' }
           $p = Start-Process engine/build/oracle-example.exe -Wait -PassThru
@@ -59,6 +60,7 @@ jobs:
             build/fortuna-windows.png
             build/gui-tickets.txt
             build/imports.txt
+            build/engine-disassembly.txt
             build/한글 경로/report.txt
             dist/*.zip
             dist/SHA256SUMS.txt
