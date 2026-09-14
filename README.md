@@ -1,10 +1,18 @@
-# Febius Fortuna 1.5.0
+# Febius Fortuna 1.6.0
 
 **Windows 클래식 로또 6/45 번호 생성기 · ORACLE Field Architecture**
 
-[Windows 릴리스](https://github.com/NokMyo/fortuna/releases/tag/v1.5.0) · [사용 설명서](docs/USER_GUIDE.md) · [실제 구현 명세](engine/docs/IMPLEMENTATION.md) · [Advanced Evidence Layer](engine/docs/ADVANCED_EVIDENCE_LAYER.md)
+[Windows 릴리스](https://github.com/NokMyo/fortuna/releases) · [사용 설명서](docs/USER_GUIDE.md) · [열 가지 통합 수학 기능](engine/docs/INTEGRATED_INFERENCE.md) · [Advanced Evidence Layer](engine/docs/ADVANCED_EVIDENCE_LAYER.md)
 
-**엔진 전용 폴더:** [`engine/`](engine/)에 Fortuna ORACLE Engine 1.3.0의 소스·문서·테스트·SDK를 모았습니다. 앱은 공개 API로 연결하며, 빌드할 때 엔진을 실행 파일에 포함합니다. [SDK와 호출 규격](engine/docs/ENGINE_API.md)
+**엔진 전용 폴더:** [`engine/`](engine/)에 Fortuna ORACLE Engine 1.4.0의 소스·문서·테스트·SDK를 모았습니다. 앱은 공개 API로 연결하며, 빌드할 때 엔진을 실행 파일에 포함합니다. [SDK와 호출 규격](engine/docs/ENGINE_API.md)
+
+일반·심층 ORACLE 모두 고차 확률모형, 계수 불확실성 적분, 다단계 확률 탐색,
+변화점, 가상 이력 재학습, 텐서, 동적 상태, 시간순 결합, 강건 최적화,
+정규화 상수 경계 계산을 기본 실행합니다. 심층은 같은 기능을 더 넓게 계산합니다.
+계수 적분은 경험적 베이지안 유한 격자이고 동적 상태는 주변 확률 근사입니다.
+실제 범위·검증·계산 비용은 [통합 명세](engine/docs/INTEGRATED_INFERENCE.md)에 명시합니다.
+같은 방식으로 다시 추첨하면 완료된 분석을 재사용합니다. 두 ORACLE 방식 모두
+게임 간 독립 추출이므로 같은 게임이 반복될 수 있습니다.
 
 프로그램 전체 실행 로직은 **x86-64 어셈블리어**입니다. C/C++ 런타임 없이 Win32 API를 직접 호출합니다. Febius Downrush의 유틸리티 디자인 방향에 맞춰 회색 기본 창, 네이티브 메뉴, 사각 버튼과 명확한 번호 표시를 사용합니다.
 
@@ -53,7 +61,7 @@ ORACLE 지수와 AEL 점수는 내부 분석 지표이며 당첨확률이 아닙
 
 ## 정밀 연구 분석
 
-**ORACLE기반 심층 분석 추첨**은 45C6 전체 정규화 공동 확률모형, 단계별 경험적 베이지안 축소, 후보 누락 검사와 확장, 12개 성분의 완전한 제거 재검증, 중첩 시간순 로그 손실 평가와 사전 예측 기록, 적응적 불확실성 분석을 수행합니다. 1.5.0부터 이 연구 결과에도 AEL deep 검증과 8,192 synthetic-null, 32-seed 2-swap, 검증된 AEL rejection sampling을 추가합니다.
+**ORACLE기반 심층 분석 추첨**은 기존 정밀 연구·AEL 검증을 수행한 뒤 열 가지 통합 추론 기능을 실행합니다. 실제 추첨은 네 모형의 계수 사후분포를 결합한 통합 분포와 균등 분포의 혼합을 사용합니다. 기존 공동모형 사전 예측 기록은 별도 분석 도구로 유지되며 새 통합 분포의 기록과는 구분합니다.
 
 심층 버튼은 공동 모형과 균등 분포의 혼합에서 직접 추첨하며, 일반 ORACLE 버튼은 검증 정책을 사용합니다. 연구 모형의 실제 예측 우위는 아직 입증되지 않았습니다. 연구는 계산량이 크며 취소할 수 있습니다. [수식·경계·사용법](engine/docs/RESEARCH.md)
 
@@ -85,7 +93,7 @@ GitHub Actions는 실제 Windows 빌드·자체 검사·한글 경로·GUI 제�
 - [ORACLE.md](engine/docs/ORACLE.md), [ORACLE_FIELD_ARCHITECTURE.md](engine/docs/ORACLE_FIELD_ARCHITECTURE.md): 전체 설계와 장기 연구 명세
 - [FORMAT.md](engine/data/FORMAT.md): 입력 데이터 계약
 
-**제품 버전 1.5.0은 설계 문서의 모든 장기 연구 항목 완료를 의미하지 않습니다.** 자동 데이터 공급, 외부 공증, GPU 가속 등 미구현 항목은 구현 명세에 명시합니다.
+**제품 버전 1.6.0은 설계 문서의 모든 장기 연구 항목 완료를 의미하지 않습니다.** 자동 데이터 공급, 외부 공증, GPU 가속, 통합 분포의 영구 기록, 연속 전체 사후분포 적분과 증명된 구간 연산은 포함하지 않습니다. 열 기능의 실제 구현 범위는 통합 명세에 명시합니다.
 
 ## 추첨 방식과 구현 언어
 

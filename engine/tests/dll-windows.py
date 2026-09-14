@@ -11,7 +11,7 @@ generate=api('Generate',(C.c_uint32,C.c_void_p,C.c_uint32))
 snapshot=api('GetSnapshot',(C.c_void_p,C.c_uint32));report=api('GetReport',(C.c_void_p,C.c_uint32))
 progress=api('GetProgress',(C.c_void_p,C.c_uint32))
 assert api('GetAbiVersion')()==0x10000
-assert api('GetEngineVersion')()==0x10200
+assert api('GetEngineVersion')()==0x10400
 out=(C.c_uint64*10)()
 assert generate(1,out,10)==-4
 assert init()==0 and init()==0

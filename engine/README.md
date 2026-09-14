@@ -1,4 +1,8 @@
-# Fortuna ORACLE Engine 1.2.0
+# Fortuna ORACLE Engine 1.4.0
+
+일반·심층 기본 경로의 [열 가지 통합 추론 기능](docs/INTEGRATED_INFERENCE.md)을
+`integrated.inc`에서 구현합니다. 네 모형의 유한 계수 사후분포를 시간순으로
+결합하고 강건화한 확률을 `GenerateIntegrated`로 추첨합니다.
 
 Febius Fortuna의 분석·검증·번호 생성 엔진입니다. **기존 `NokMyo/fortuna` 저장소의 `engine/` 폴더에서 독립적으로 관리합니다.** 계산 로직은 x64 어셈블리이며 GUI에 의존하지 않습니다.
 

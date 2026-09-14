@@ -265,6 +265,8 @@ FN UpdateResultUI,96
     je .ur_random_metrics
     cmp dword ptr [rip+app_draw_kind],2
     je .ur_deep_metrics
+    cmp dword ptr [rip+app_draw_kind],1
+    je .ur_integrated_metrics
     cmp dword ptr [rip+model_ready],1
     jne .ur_no_metrics
     mov eax,[rip+field_count]
@@ -301,7 +303,10 @@ FN UpdateResultUI,96
     lea r8,[rip+text_random_metrics]
     jmp .ur_set_metrics
 .ur_deep_metrics:
-    lea r8,[rip+text_deep_metrics]
+    lea r8,[rip+text_ten_deep]
+    jmp .ur_set_metrics
+.ur_integrated_metrics:
+    lea r8,[rip+text_ten_normal]
 .ur_set_metrics:
     mov rcx,[rip+h_main]
     mov edx,1104

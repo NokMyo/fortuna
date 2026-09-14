@@ -388,6 +388,7 @@ FN BuildReport
     jmp .br_fold
 .br_finish:
     call ResearchReport
+    call IntegratedReport
     lea rcx,[rip+r_limits]
     call Text
     mov rax,[rip+report_cursor]

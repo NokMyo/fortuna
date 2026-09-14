@@ -160,13 +160,13 @@ FN GenerateDraw
     jz .draw_uniform
     cmp esi,2
     je .draw_deep
-    call FortunaOracleGenerate
+    call FortunaOracleGenerateIntegrated
     jmp .draw_result
 .draw_uniform:
     call FortunaOracleGenerateUniform
     jmp .draw_result
 .draw_deep:
-    call FortunaOracleGenerateResearchAdvanced
+    call FortunaOracleGenerateIntegrated
 .draw_result:
     mov ebx,eax
     call RefreshEngineState

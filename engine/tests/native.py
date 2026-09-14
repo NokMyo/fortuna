@@ -4,7 +4,7 @@ Only this ABI adapter and OS entropy adapter differ from the Windows binary.
 import ctypes as C
 import pathlib,re,subprocess
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-MODULES=['core','hash','data','stats','linalg','models','field','robust','sample','joint','research','validation','advanced','advanced_fix','report']
+MODULES=['core','hash','data','stats','linalg','models','field','robust','sample','joint','research','validation','advanced','advanced_fix','integrated','report']
 def build(extra=()):
     modules=MODULES+list(extra)
     source='.intel_syntax noprefix\n'+ '\n'.join((ROOT/f'src/{m}.inc').read_text() for m in modules)
