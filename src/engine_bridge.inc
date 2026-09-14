@@ -83,13 +83,21 @@ FN SelfTest
     call FortunaOracleSelfTest
     END
 FN LoadCsvFile
+    mov r12,rcx
+    call StrictLicenseCheck
+    test eax,eax
+    jz .load_auth_fail
+    mov rcx,r12
     call FortunaOracleLoadCsvFileW
     mov ebx,eax
     call RefreshEngineState
     xor eax,eax
     test ebx,ebx
     sete al
-    END
+    jmp .load_out
+.load_auth_fail:
+    xor eax,eax
+.load_out: END
 FN AnalyzeOracle
     mov ecx,[rip+app_research_mode]
     test ecx,ecx
