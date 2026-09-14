@@ -12,6 +12,7 @@
 .include "src/joint.inc"
 .include "src/research.inc"
 .include "src/validation.inc"
+.include "src/advanced.inc"
 .include "src/report.inc"
 .include "src/ledger.inc"
 .include "src/selftest.inc"
