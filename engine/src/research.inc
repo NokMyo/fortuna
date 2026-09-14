@@ -42,6 +42,7 @@ audit_misses_before: .skip 4
 audit_misses_after: .skip 4
 audit_capacity: .skip 4
 research_end:
+.equ RESEARCH_BYTES,research_end-research_begin
 research_saved_coef: .skip JOINT_BYTES
 research_saved_logz: .skip 8
 research_saved_weights: .skip 24
@@ -548,7 +549,7 @@ FN JointUncertainty,48
     END 48
 FN AnalyzeResearch
     lea rcx,[rip+research_begin]
-    mov edx,offset research_end-research_begin
+    mov edx,offset RESEARCH_BYTES
     call Zero
     mov dword ptr [rip+research_active],1
     mov dword ptr [rip+joint_universe],45
