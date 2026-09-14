@@ -393,7 +393,11 @@ FN ScanField
     cmp rbx,[rip+rank_truth_mask]
     jae 1f
 2:  inc dword ptr [rip+rank_truth_position]
-1:  mov rdx,rax
+1:  cmp dword ptr [rip+research_full_scan],1
+    jne 3f
+    mov rcx,rbx
+    call ScoreDeep
+3:  mov rdx,rax
     mov rcx,rbx
     call FastHeapInsert
     inc dword ptr [rip+scan_count]

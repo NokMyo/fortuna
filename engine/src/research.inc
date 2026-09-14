@@ -246,6 +246,8 @@ FN JointSelectSetting,32
 .jss_fail: xor eax,eax
 .jss_out: END 32
 FN JointNestedValidation,32
+    mov dword ptr [rip+analysis_stage],9
+    mov dword ptr [rip+progress],0
     mov dword ptr [rip+research_outer_count],0
     mov qword ptr [rip+research_log_e],0
     mov qword ptr [rip+research_max_log_e],0
@@ -257,6 +259,20 @@ FN JointNestedValidation,32
     jge .jnv_loop
     mov ebp,64
 .jnv_loop:
+    mov eax,[rip+history_count]
+    sub eax,64
+    cmp eax,[rip+research_outer_limit]
+    jle 1f
+    mov eax,[rip+research_outer_limit]
+1:  test eax,eax
+    jns 2f
+    xor eax,eax
+2:  lea ecx,[rax+1]
+    mov eax,[rip+research_outer_count]
+    imul eax,eax,100
+    xor edx,edx
+    div ecx
+    mov [rip+progress],eax
     cmp ebp,[rip+history_count]
     jae .jnv_final
     mov dword ptr [rip+analysis_stage],9
@@ -372,6 +388,7 @@ FN JointUncertainty,48
     mov dword ptr [rip+research_world_count],0
     mov dword ptr [rip+research_mc_converged],0
     xor ebp,ebp
+    mov dword ptr [rip+progress],0
 .ju_world:
     mov dword ptr [rip+analysis_stage],10
     cmp ebp,6
@@ -406,6 +423,10 @@ FN JointUncertainty,48
     jz .ju_fail
     inc ebp
     mov [rip+research_world_count],ebp
+    imul eax,ebp,100
+    xor edx,edx
+    div dword ptr [rip+research_world_limit]
+    mov [rip+progress],eax
     lea rax,[rip+research_world_model_count]
     inc dword ptr [rax+r12*4]
     mov edi,[rax+r12*4]

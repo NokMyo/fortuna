@@ -239,6 +239,18 @@ FN FortunaOracleGetProgress
     mov [rcx],eax
     mov eax,[rip+progress]
     mov [rcx+4],eax
+    cmp dword ptr [rip+research_active],1
+    jne 1f
+    mov eax,[rip+research_ablation_count]
+    cmp eax,13
+    jae 1f
+    mov dword ptr [rcx],8
+    imul eax,eax,100
+    xor edx,edx
+    mov r8d,13
+    div r8d
+    mov [rcx+4],eax
+1:
     mov eax,[rip+validation_count]
     mov [rcx+8],eax
     mov eax,[rip+history_count]
