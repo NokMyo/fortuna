@@ -70,6 +70,9 @@ FN StartupCheck
     call FortunaOracleGetAbiVersion
     cmp eax,0x10000
     jne .startup_fail
+    call FortunaOracleGetAdvancedVersion
+    cmp eax,0x10300
+    jb .startup_fail
     call StrictLicenseCheck
     test eax,eax
     jz .startup_fail
@@ -103,9 +106,9 @@ FN AnalyzeOracle
     test ecx,ecx
     jz 1f
     dec ecx
-    call FortunaOracleAnalyzeResearch
+    call FortunaOracleAnalyzeResearchAdvanced
     jmp 2f
-1:  call FortunaOracleAnalyze
+1:  call FortunaOracleAnalyzeAdvanced
 2:
     mov ebx,eax
     call RefreshEngineState
@@ -163,7 +166,7 @@ FN GenerateDraw
     call FortunaOracleGenerateUniform
     jmp .draw_result
 .draw_deep:
-    call FortunaOracleGenerateResearch
+    call FortunaOracleGenerateResearchAdvanced
 .draw_result:
     mov ebx,eax
     call RefreshEngineState

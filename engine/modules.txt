@@ -11,9 +11,11 @@ joint
 research
 validation
 advanced
+advanced_fix
 report
 ledger
 selftest
 io
 forecast
 api
+advanced_api

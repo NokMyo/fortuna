@@ -2,10 +2,12 @@ LIBRARY FortunaOracle
 EXPORTS
     FortunaOracleGetAbiVersion
     FortunaOracleGetEngineVersion
+    FortunaOracleGetAdvancedVersion
     FortunaOracleInitialize
     FortunaOracleLoadCsv
     FortunaOracleLoadCsvFileW
     FortunaOracleAnalyze
+    FortunaOracleAnalyzeAdvanced
     FortunaOracleCancel
     FortunaOracleGenerate
     FortunaOracleGetSnapshot
@@ -15,8 +17,10 @@ EXPORTS
     FortunaOracleUseUniform
     FortunaOracleSelfTest
     FortunaOracleAnalyzeResearch
+    FortunaOracleAnalyzeResearchAdvanced
     FortunaOracleGetJointProbability
     FortunaOracleForecastLedgerW
     FortunaOracleGetResearchSnapshot
     FortunaOracleGenerateResearch
+    FortunaOracleGenerateResearchAdvanced
     FortunaOracleGenerateUniform
