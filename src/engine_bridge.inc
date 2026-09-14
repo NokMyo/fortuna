@@ -123,3 +123,30 @@ FN SealPick
     js 1f
     lea eax,[rbx+1]
 1:  END
+
+# ecx=count, edx=0 uniform / 1 standard / 2 deep. Commit label only on success.
+FN GenerateDraw
+    mov esi,edx
+    lea rdx,[rip+session_masks]
+    mov r8d,10
+    test esi,esi
+    jz .draw_uniform
+    cmp esi,2
+    je .draw_deep
+    call FortunaOracleGenerate
+    jmp .draw_result
+.draw_uniform:
+    call FortunaOracleGenerateUniform
+    jmp .draw_result
+.draw_deep:
+    call FortunaOracleGenerateResearch
+.draw_result:
+    mov ebx,eax
+    call RefreshEngineState
+    test ebx,ebx
+    jnz .draw_fail
+    mov [rip+app_draw_kind],esi
+    mov eax,1
+    jmp .draw_out
+.draw_fail: xor eax,eax
+.draw_out: END

@@ -23,7 +23,7 @@ FN FortunaOracleGetAbiVersion
     mov eax,0x10000
     END
 FN FortunaOracleGetEngineVersion
-    mov eax,0x10100
+    mov eax,0x10200
     END
 FN ApiLock
     lea rcx,[rip+api_lock]
@@ -173,7 +173,7 @@ FN FortunaOracleGetSnapshot
     call Zero
     mov dword ptr [rbx],272
     mov dword ptr [rbx+4],0x10000
-    mov dword ptr [rbx+8],0x10100
+    mov dword ptr [rbx+8],0x10200
     mov eax,[rip+model_ready]
     shl eax,1
     or eax,[rip+field_ready]
@@ -527,3 +527,51 @@ FN FortunaOracleGenerateResearch
 .gr_finish: call ApiFinish; jmp .gr_out
 .gr_arg: mov eax,-1
 .gr_out: END
+
+.globl FortunaOracleGenerateUniform
+# Independent uniform draws preserve all cached analysis and research state.
+FN FortunaOracleGenerateUniform
+    cmp ecx,1
+    jb .gu_arg
+    cmp ecx,10
+    ja .gu_arg
+    test rdx,rdx
+    jz .gu_arg
+    cmp r8d,ecx
+    jb .gu_arg
+    mov ebp,ecx
+    mov rbx,rdx
+    call ApiLock
+    test eax,eax
+    jnz .gu_out
+    mov dword ptr [rip+rng_mode],0
+    mov dword ptr [rip+rng_error],0
+    mov dword ptr [rip+session_count],0
+    xor esi,esi
+.gu_sample:
+    call GenerateUniformMask
+    test rax,rax
+    jz .gu_rng
+    lea rdx,[rip+session_masks]
+    mov [rdx+rsi*8],rax
+    inc esi
+    cmp esi,ebp
+    jb .gu_sample
+    mov rax,[rip+session_masks]
+    mov [rip+selected_mask],rax
+    mov rcx,rax
+    lea rdx,[rip+selected_nums]
+    call MaskToNumbers
+    mov dword ptr [rip+selected_index],0
+    mov qword ptr [rip+selected_score],0
+    mov [rip+session_count],ebp
+    mov rcx,rbx
+    lea rdx,[rip+session_masks]
+    lea r8d,[rbp*8]
+    call Copy
+    xor ecx,ecx
+    jmp .gu_finish
+.gu_rng: mov ecx,-5
+.gu_finish: call ApiFinish; jmp .gu_out
+.gu_arg: mov eax,-1
+.gu_out: END

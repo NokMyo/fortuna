@@ -1,4 +1,4 @@
-# Fortuna ORACLE Engine 1.1.0
+# Fortuna ORACLE Engine 1.2.0
 
 Febius Fortuna의 분석·검증·번호 생성 엔진입니다. **기존 `NokMyo/fortuna` 저장소의 `engine/` 폴더에서 독립적으로 관리합니다.** 계산 로직은 x64 어셈블리이며 GUI에 의존하지 않습니다.
 
@@ -29,3 +29,5 @@ Linux 교차 빌드는 `sh scripts/build-linux.sh`로 정적 라이브러리를 
 ## 정밀 연구 확장
 
 `joint.inc`, `research.inc`, `forecast.inc`가 공동 확률모형, 축소, 탐색 누락 감사, 완전한 성분 제거 재검증, 중첩 검증, 적응적 섭동과 사전 예측 기록을 구현합니다. [계산 규격과 제한](docs/RESEARCH.md)을 기준으로 사용하세요. 공개 API는 기존 ABI 1.0 구조체를 유지하고 연구용 함수를 추가했습니다. 일반 분석과 연구 분석은 같은 엔진 잠금을 사용합니다.
+
+`FortunaOracleGenerateUniform`은 완료된 분석을 보존하면서 균등 무작위 추첨합니다. `Generate`는 표준 검증 정책, `GenerateResearch`는 완료된 심층 공동 모형을 사용합니다.

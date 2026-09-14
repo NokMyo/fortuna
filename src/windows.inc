@@ -261,6 +261,10 @@ FN UpdateResultUI,96
     mov edx,1102
     lea r8,[rip+ui_tickets]
     call SetDlgItemTextW
+    cmp dword ptr [rip+app_draw_kind],0
+    je .ur_random_metrics
+    cmp dword ptr [rip+app_draw_kind],2
+    je .ur_deep_metrics
     cmp dword ptr [rip+model_ready],1
     jne .ur_no_metrics
     mov eax,[rip+field_count]
@@ -292,14 +296,34 @@ FN UpdateResultUI,96
     mov edx,1104
     lea r8,[rip+empty]
     call SetDlgItemTextW
-.ur_label:
+    jmp .ur_label
+.ur_random_metrics:
+    lea r8,[rip+text_random_metrics]
+    jmp .ur_set_metrics
+.ur_deep_metrics:
+    lea r8,[rip+text_deep_metrics]
+.ur_set_metrics:
     mov rcx,[rip+h_main]
+    mov edx,1104
+    call SetDlgItemTextW
+.ur_label:
+    lea r8,[rip+text_mode_sealed]
+    cmp dword ptr [rip+app_draw_kind],3
+    je 3f
+    lea r8,[rip+text_mode_random]
+    cmp dword ptr [rip+app_draw_kind],0
+    je 3f
+    lea r8,[rip+text_mode_deep]
+    cmp dword ptr [rip+app_draw_kind],2
+    je 3f
+    lea r8,[rip+text_mode_oracle]
+    movsd xmm0,[rip+rho]
+    ucomisd xmm0,[rip+one]
+    jb 3f
+    lea r8,[rip+text_oracle_fallback]
+3:  mov rcx,[rip+h_main]
     mov edx,1103
-    lea r8,[rip+text_uniform]
-    cmp dword ptr [rip+field_ready],1
-    jne 3f
-    lea r8,[rip+text_done]
-3:  call SetDlgItemTextW
+    call SetDlgItemTextW
     END 96
 
 FN CopyTickets

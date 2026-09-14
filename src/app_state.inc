@@ -27,3 +27,9 @@ report_buffer: .skip 2097152
 .section .bss
 app_research_mode: .skip 4
 forecast_path: .skip 2048
+
+app_draw_kind: .skip 4
+app_request_kind: .skip 4
+app_model_kind: .skip 4
+.section .data
+app_ticket_count: .long 1

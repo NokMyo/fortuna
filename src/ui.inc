@@ -34,6 +34,19 @@ FN WinMainCRTStartup,32
     mov dword ptr [rip+smoke_mode],1
     jmp .entry_free
 2:  mov rcx,[rbx+8]
+    lea rdx,[rip+cmd_open]
+    call lstrcmpW
+    test eax,eax
+    jnz .entry_check_analyze
+    cmp dword ptr [rip+command_argc],3
+    jne .entry_bad_args
+    mov rcx,[rbx+16]
+    call LoadCsvFile
+    test eax,eax
+    jz .entry_error
+    jmp .entry_free
+.entry_check_analyze:
+    mov rcx,[rbx+8]
     lea rdx,[rip+cmd_analyze]
     call lstrcmpW
     test eax,eax
@@ -172,8 +185,19 @@ FN SetBusyControls
     mov edx,ebp
 2:  call EnableWindow
     inc esi
-    cmp esi,1010
+    cmp esi,1023
     jbe 1b
+    mov esi,1120
+3:  mov rcx,[rip+h_main]
+    mov edx,esi
+    call GetDlgItem
+    mov rcx,rax
+    mov edx,1
+    sub edx,ebp
+    call EnableWindow
+    inc esi
+    cmp esi,1122
+    jbe 3b
     END
 
 FN DialogProc,128
@@ -223,10 +247,20 @@ FN DialogProc,128
     mov r8d,150
     xor r9d,r9d
     call SetTimer
+    mov rcx,rbx
+    mov edx,1120
+    mov r8d,1122
+    mov r9d,1120
+    call CheckRadioButton
+    cmp dword ptr [rip+history_count],0
+    je .dp_init_smoke
+    call UpdateDataUI
+.dp_init_smoke:
     cmp dword ptr [rip+smoke_mode],1
     jne .dp_true
     mov ecx,5
-    call GenerateTickets
+    xor edx,edx
+    call GenerateDraw
     call UpdateResultUI
     jmp .dp_true
 .dp_command:
@@ -248,10 +282,15 @@ FN DialogProc,128
     je .dp_manual
     cmp dword ptr [rip+analysis_busy],0
     jne .dp_busy
+    cmp eax,1120
+    jb .dp_not_count
+    cmp eax,1122
+    jbe .dp_count
+.dp_not_count:
     cmp eax,ID_LOAD
     je .dp_load
     cmp eax,1023
-    je .dp_joint_generate
+    je .dp_research
     cmp eax,1019
     je .dp_research
     cmp eax,1020
@@ -296,18 +335,9 @@ FN DialogProc,128
     call LoadCsvFile
     test eax,eax
     jz .dp_load_error
-    mov eax,[rip+last_round]
-    inc eax
-    mov [rsp+32],rax
-    lea rcx,[rip+ui_status]
-    lea rdx,[rip+fmt_data]
-    mov r8d,[rip+history_count]
-    mov r9d,[rip+last_round]
-    call wsprintfW
-    mov rcx,rbx
-    mov edx,1105
-    lea r8,[rip+ui_status]
-    call SetDlgItemTextW
+    mov dword ptr [rip+app_model_kind],0
+    mov dword ptr [rip+app_draw_kind],0
+    call UpdateDataUI
     call UpdateResultUI
     lea rcx,[rip+text_loaded]
     call Notify
@@ -322,16 +352,33 @@ FN DialogProc,128
     call Alert
     jmp .dp_true
 .dp_analyze:
+    mov dword ptr [rip+app_request_kind],1
     mov dword ptr [rip+app_research_mode],0
     jmp .dp_analyze_start
 .dp_research:
+    mov dword ptr [rip+app_request_kind],2
     mov dword ptr [rip+app_research_mode],1
     jmp .dp_analyze_start
 .dp_research_full:
+    mov dword ptr [rip+app_request_kind],2
     mov dword ptr [rip+app_research_mode],2
 .dp_analyze_start:
     cmp dword ptr [rip+history_count],60
     jb .dp_need
+    mov eax,[rip+app_research_mode]
+    inc eax
+    cmp eax,[rip+app_model_kind]
+    jne .dp_start_worker
+    cmp dword ptr [rip+field_ready],1
+    jne .dp_start_worker
+    mov ecx,[rip+app_ticket_count]
+    mov edx,[rip+app_request_kind]
+    call GenerateDraw
+    test eax,eax
+    jz .dp_rng
+    jmp .dp_update
+.dp_start_worker:
+    mov dword ptr [rip+app_model_kind],0
     mov dword ptr [rip+analysis_busy],1
     mov dword ptr [rip+cancel_flag],0
     mov dword ptr [rip+field_ready],0
@@ -359,18 +406,25 @@ FN DialogProc,128
     lea rcx,[rip+text_need]
     call Alert
     jmp .dp_true
-.dp_generate:
-    call SampleCandidate
+.dp_count:
+    mov r9d,eax
+    sub eax,1120
+    mov ecx,1
     test eax,eax
-    jz .dp_rng
-    mov dword ptr [rip+session_count],1
-    mov rax,[rip+selected_mask]
-    mov [rip+session_masks],rax
-    jmp .dp_update
-.dp_five: mov ecx,5; jmp .dp_multiple
-.dp_ten: mov ecx,10
-.dp_multiple:
-    call GenerateTickets
+    jz 1f
+    imul ecx,eax,5
+1:  mov [rip+app_ticket_count],ecx
+    mov rcx,rbx
+    mov edx,1120
+    mov r8d,1122
+    call CheckRadioButton
+    jmp .dp_true
+.dp_five: mov eax,1121; jmp .dp_count
+.dp_ten: mov eax,1122; jmp .dp_count
+.dp_generate:
+    mov ecx,[rip+app_ticket_count]
+    xor edx,edx
+    call GenerateDraw
     test eax,eax
     jz .dp_rng
 .dp_update:
@@ -455,18 +509,6 @@ FN DialogProc,128
     lea rcx,[rip+text_report_need]
     call Alert
     jmp .dp_true
-.dp_joint_generate:
-    mov ecx,1
-    lea rdx,[rip+session_masks]
-    mov r8d,10
-    call FortunaOracleGenerateResearch
-    test eax,eax
-    jnz .dp_forecast_error
-    call RefreshEngineState
-    call UpdateResultUI
-    lea rcx,[rip+text_joint_research]
-    call Notify
-    jmp .dp_true
 .dp_forecast_save:
     mov edx,1
     jmp .dp_forecast_run
@@ -495,20 +537,13 @@ FN DialogProc,128
     call OpenPath
     jmp .dp_true
 .dp_uniform:
-    call FortunaOracleUseUniform
-    call RefreshEngineState
-    mov dword ptr [rip+field_ready],0
-    movsd xmm0,[rip+one]
-    movsd [rip+rho],xmm0
-    call UpdateResultUI
-    lea rcx,[rip+text_uniform]
-    call Notify
-    jmp .dp_true
+    jmp .dp_generate
 .dp_seal:
     call SealPick
     test eax,eax
     jz .dp_seal_error
     mov esi,eax
+    mov dword ptr [rip+app_draw_kind],3
     mov rax,[rip+selected_mask]
     mov [rip+session_masks],rax
     mov dword ptr [rip+session_count],1
@@ -667,13 +702,13 @@ FN AnalysisThread
     mov [rip+elapsed_ms],rax
     test ebp,ebp
     jz 1f
-    call SampleCandidate
+    mov eax,[rip+app_research_mode]
+    inc eax
+    mov [rip+app_model_kind],eax
+    mov ecx,[rip+app_ticket_count]
+    mov edx,[rip+app_request_kind]
+    call GenerateDraw
     mov ebp,eax
-    test eax,eax
-    jz 1f
-    mov dword ptr [rip+session_count],1
-    mov rax,[rip+selected_mask]
-    mov [rip+session_masks],rax
 1:  mov [rip+worker_result],ebp
     mov rcx,[rip+h_main]
     mov edx,0x8001
@@ -682,3 +717,18 @@ FN AnalysisThread
     call PostMessageW
     xor eax,eax
     END
+
+FN UpdateDataUI,16
+    mov eax,[rip+last_round]
+    inc eax
+    mov [rsp+32],rax
+    lea rcx,[rip+ui_status]
+    lea rdx,[rip+fmt_data]
+    mov r8d,[rip+history_count]
+    mov r9d,[rip+last_round]
+    call wsprintfW
+    mov rcx,[rip+h_main]
+    mov edx,1105
+    lea r8,[rip+ui_status]
+    call SetDlgItemTextW
+    END 16

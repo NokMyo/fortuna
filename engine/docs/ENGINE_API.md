@@ -86,3 +86,7 @@ The engine extraction does not claim new predictive performance or complete the 
 New successful CSV imports and ordinary Analyze invalidate the research-ready flag. Invalid CSV imports preserve prior research just as they preserve prior data. UseUniform disables research generation. Research analysis clears the ledger-valid flag until the ledger is audited again. The same one-state process model and private SRW lock apply to all research calls.
 
 The report includes all ablation and outer-fold rows. Engine/client code and SDK declarations are versioned together in this repository. [Research formulas, limits and FJP1 layout](RESEARCH.md)
+
+## Engine 1.2.0 추가 API (ABI 1.0 유지)
+
+`FortunaOracleGenerateUniform(count, masks, capacity)`는 1~10개의 독립적인 균등 무작위 게임을 생성합니다. 일반/심층 분석의 모형·검증 결과를 보존하며 선택 번호의 내부 점수는 0으로 초기화합니다. 게임 간 같은 조합이 반복될 수 있습니다. 인자 오류 -1, busy -2, 초기화 필요 -4, 보안 난수 실패 -5를 반환하고 성공 시 0을 반환합니다. 출력 버퍼는 성공 시에만 기록합니다.

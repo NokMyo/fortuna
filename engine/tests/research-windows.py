@@ -24,6 +24,21 @@ assert joint(63,pair)==0 and all(0<x<1 for x in pair)
 assert math.isclose(pair[1],.5*pair[0]+.5/8145060,rel_tol=1e-12)
 output=(C.c_uint64*10)();assert generate(10,output,10)==0
 assert all(x.bit_count()==6 and x>>45==0 for x in output)
+# Uniform draws must not use or destroy the strongly biased cached research model.
+uniform=api('GenerateUniform',(C.c_uint32,C.c_void_p,C.c_uint32))
+assert joint(63,pair)==0
+before_pair=tuple(pair);before_state=bytes(state)
+assert uniform(0,output,10)==-1 and uniform(11,output,10)==-1
+assert uniform(1,None,10)==-1 and uniform(10,output,9)==-1
+hits=0
+for _ in range(100):
+ assert uniform(10,output,10)==0
+ assert all(x.bit_count()==6 and x>>45==0 for x in output)
+ hits+=sum((x&63).bit_count() for x in output)
+assert 600<hits<1000,hits # uniform expectation 800, broad non-flaky range
+assert joint(63,pair)==0 and tuple(pair)==before_pair
+assert snapshot(state,128)==0 and bytes(state)==before_state
+assert generate(10,output,10)==0 # cached deep sampling still works
 mask=sum(1<<(i-1) for i in rows[60]);assert joint(mask,pair)==0
 expected_loge=math.log(pair[1]*8145060)
 with tempfile.TemporaryDirectory() as folder:

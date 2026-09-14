@@ -60,6 +60,8 @@ FO_API int32_t FortunaOracleGetJointProbability(uint64_t mask, double out[2]);
 FO_API int32_t FortunaOracleForecastLedgerW(const wchar_t *path, uint32_t append);
 FO_API int32_t FortunaOracleGetResearchSnapshot(FortunaOracleResearchSnapshot *out, uint32_t bytes);
 FO_API int32_t FortunaOracleCancel(void);
+// Always uniform; preserves cached standard and research analysis. Independent games may repeat.
+FO_API int32_t FortunaOracleGenerateUniform(uint32_t count, uint64_t *masks, uint32_t capacity);
 FO_API int32_t FortunaOracleGenerate(uint32_t count, uint64_t *masks, uint32_t capacity);
 FO_API int32_t FortunaOracleGetSnapshot(FortunaOracleSnapshot *out, uint32_t bytes);
 FO_API int32_t FortunaOracleGetProgress(FortunaOracleProgress *out, uint32_t bytes);

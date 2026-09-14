@@ -33,6 +33,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 public static class WindowCheck {
  [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L,T,R,B; }
+ [DllImport("user32.dll")] public static extern bool IsWindowEnabled(IntPtr h);
  [DllImport("user32.dll")] public static extern IntPtr GetDlgItem(IntPtr h, int id);
  [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
@@ -42,14 +43,48 @@ public static class WindowCheck {
  [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h,uint msg,IntPtr w,IntPtr l);
 }
 '@
-$p = Start-Process -FilePath $exe -PassThru
+$p = Start-Process -FilePath $exe -ArgumentList '--open build/research-60.csv' -PassThru
 try {
     $p.WaitForInputIdle(10000) | Out-Null
     for ($i=0; $i -lt 100; $i++) { Start-Sleep -Milliseconds 100; $p.Refresh(); if ($p.MainWindowHandle -ne 0 -and [WindowCheck]::GetDlgItem($p.MainWindowHandle,1102) -ne [IntPtr]::Zero) { break } }
     $h = $p.MainWindowHandle
     Write-Host "GUI handle=$h title=$($p.MainWindowTitle) tickets=$([WindowCheck]::GetDlgItem($h,1102))"
     if ($h -eq 0) { throw 'GUI window was not created' }
-    [WindowCheck]::SendMessage($h,0x111,[IntPtr]1005,[IntPtr]::Zero) | Out-Null
+    function Read-Text([int]$id) {
+        $t = [Text.StringBuilder]::new(4096)
+        [WindowCheck]::ReadControl([WindowCheck]::GetDlgItem($h,$id),0xD,[IntPtr]4096,$t) | Out-Null
+        return $t.ToString()
+    }
+    function Command([int]$id) { [WindowCheck]::SendMessage($h,0x111,[IntPtr]$id,[IntPtr]::Zero) | Out-Null }
+    function Wait-Analysis {
+        $deadline = [DateTime]::UtcNow.AddSeconds(180)
+        while ([WindowCheck]::IsWindowEnabled([WindowCheck]::GetDlgItem($h,1004))) {
+            if ([DateTime]::UtcNow -gt $deadline) { throw 'GUI analysis timed out' }
+            Start-Sleep -Milliseconds 100
+        }
+    }
+    foreach ($id in @(1003,1002,1019)) {
+        if (-not (Read-Text $id).Contains('추첨')) { throw "Missing draw button $id" }
+    }
+    Command 1121
+    Command 1003
+    if ((Read-Text 1103) -notmatch '균등 무작위') { throw 'Random route incorrect' }
+    Command 1002
+    Wait-Analysis
+    if ((Read-Text 1103) -notmatch 'ORACLE' -or (Read-Text 1103) -match '심층') { throw 'General route incorrect' }
+    Command 1019
+    Wait-Analysis
+    if ((Read-Text 1103) -notmatch '심층' -or (Read-Text 1104) -notmatch '공동 확률') { throw 'Deep route incorrect' }
+    Command 1003
+    if ((Read-Text 1103) -notmatch '균등 무작위') { throw 'Random after deep route incorrect' }
+    Command 1122
+    Command 1019
+    if ([WindowCheck]::IsWindowEnabled([WindowCheck]::GetDlgItem($h,1004))) { throw 'Deep cache was lost by uniform draw' }
+    if ((Read-Text 1103) -notmatch '심층') { throw 'Cached deep route incorrect' }
+    $ten = @((Read-Text 1102) -split '\r?\n' | Where-Object { $_.Trim() })
+    if ($ten.Count -ne 10) { throw 'Shared 10-game selection failed' }
+    Command 1121
+    Command 1003
     $rect = [WindowCheck+RECT]::new()
     if (-not [WindowCheck]::GetWindowRect($h,[ref]$rect)) { throw 'Cannot measure GUI' }
     $bmp = [Drawing.Bitmap]::new($rect.R-$rect.L,$rect.B-$rect.T)
