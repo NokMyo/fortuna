@@ -12,12 +12,17 @@ FN FortunaOracleAnalyzeAdvanced
     test eax,eax
     jnz .aaa_out
     mov dword ptr [rip+cancel_flag],0
+    mov dword ptr [rip+ti_ready],0
     mov dword ptr [rip+research_ready],0
     mov dword ptr [rip+forecast_valid],0
     call AnalyzeOracle
     test eax,eax
     jz .aaa_fail
     call AdvancedFinalizeNormalV2
+    test eax,eax
+    jz .aaa_fail
+    xor ecx,ecx
+    call IntegratedAnalyze
     test eax,eax
     jz .aaa_fail
     xor ecx,ecx
@@ -40,12 +45,17 @@ FN FortunaOracleAnalyzeResearchAdvanced
     test eax,eax
     jnz .aara_out
     mov [rip+research_full_scan],ebx
+    mov dword ptr [rip+ti_ready],0
     mov dword ptr [rip+cancel_flag],0
     mov dword ptr [rip+forecast_valid],0
     call AnalyzeResearch
     test eax,eax
     jz .aara_fail
     call AdvancedFinalizeDeepV2
+    test eax,eax
+    jz .aara_fail
+    mov ecx,1
+    call IntegratedAnalyze
     test eax,eax
     jz .aara_fail
     xor ecx,ecx

@@ -23,7 +23,7 @@ FN FortunaOracleGetAbiVersion
     mov eax,0x10000
     END
 FN FortunaOracleGetEngineVersion
-    mov eax,0x10200
+    mov eax,0x10400
     END
 FN ApiLock
     lea rcx,[rip+api_lock]
@@ -115,6 +115,7 @@ FN FortunaOracleAnalyze
     jnz .ana_out
     mov dword ptr [rip+cancel_flag],0
     mov dword ptr [rip+research_ready],0
+    mov dword ptr [rip+ti_ready],0
     mov dword ptr [rip+forecast_valid],0
     call AnalyzeOracle
     xor ecx,ecx
@@ -173,7 +174,7 @@ FN FortunaOracleGetSnapshot
     call Zero
     mov dword ptr [rbx],272
     mov dword ptr [rbx+4],0x10000
-    mov dword ptr [rbx+8],0x10200
+    mov dword ptr [rbx+8],0x10400
     mov eax,[rip+model_ready]
     shl eax,1
     or eax,[rip+field_ready]
@@ -324,6 +325,7 @@ FN FortunaOracleUseUniform
     test eax,eax
     jnz .uniform_out
     mov dword ptr [rip+research_ready],0
+    mov dword ptr [rip+ti_ready],0
     mov dword ptr [rip+field_ready],0
     movsd xmm0,[rip+one]
     movsd [rip+rho],xmm0
@@ -354,6 +356,7 @@ FN FortunaOracleAnalyzeResearch
     test eax,eax
     jnz .arapi_out
     mov [rip+research_full_scan],ebx
+    mov dword ptr [rip+ti_ready],0
     mov dword ptr [rip+cancel_flag],0
     mov dword ptr [rip+forecast_valid],0
     call AnalyzeResearch

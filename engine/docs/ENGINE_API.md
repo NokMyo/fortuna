@@ -1,4 +1,11 @@
-# Fortuna ORACLE Engine 1.1.0 — Windows x64 SDK
+# Fortuna ORACLE Engine 1.4.0 — Windows x64 SDK
+
+The application's normal/deep routes now use the [integrated ten-function layer](INTEGRATED_INFERENCE.md).
+`AnalyzeAdvanced` / `AnalyzeResearchAdvanced` execute it by default;
+`GenerateIntegrated`, `GetIntegratedProbability` and `GetIntegratedSnapshot`
+expose its actual sampling law and diagnostics. Lower-level legacy APIs remain
+ABI-compatible. The legacy persistent forecast ledger records the legacy joint
+model, not the integrated mixture.
 
 `FortunaOracle.dll` is a standalone, pure x86-64 assembly analysis library. It does not load Febius Fortuna, create windows, open dialogs or depend on a C/C++ runtime. Its only runtime dependencies are Windows Kernel32 and Advapi32. The GUI is a separate client of this public ABI.
 

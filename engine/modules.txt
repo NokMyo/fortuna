@@ -12,6 +12,7 @@ research
 validation
 advanced
 advanced_fix
+integrated
 report
 ledger
 selftest
@@ -19,3 +20,4 @@ io
 forecast
 api
 advanced_api
+integrated_api

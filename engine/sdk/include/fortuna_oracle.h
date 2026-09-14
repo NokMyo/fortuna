@@ -73,6 +73,11 @@ FO_API int32_t FortunaOracleCancel(void);
 // Always uniform; preserves cached standard and research analysis. Independent games may repeat.
 FO_API int32_t FortunaOracleGenerateUniform(uint32_t count, uint64_t *masks, uint32_t capacity);
 FO_API int32_t FortunaOracleGenerate(uint32_t count, uint64_t *masks, uint32_t capacity);
+/* Integrated normal/deep analysis is provided by AnalyzeAdvanced/AnalyzeResearchAdvanced.
+   Games are independent and may repeat. Snapshot is 8 uint32_t + 4 double (64 bytes). */
+FO_API int32_t FortunaOracleGenerateIntegrated(uint32_t count, uint64_t *masks, uint32_t capacity);
+FO_API int32_t FortunaOracleGetIntegratedSnapshot(void *out, uint32_t bytes);
+FO_API int32_t FortunaOracleGetIntegratedProbability(uint64_t mask, double *out);
 FO_API int32_t FortunaOracleGetSnapshot(FortunaOracleSnapshot *out, uint32_t bytes);
 FO_API int32_t FortunaOracleGetProgress(FortunaOracleProgress *out, uint32_t bytes);
 /* Positive return = required UTF-8 bytes INCLUDING NUL; negative = error.

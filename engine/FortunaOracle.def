@@ -1,5 +1,8 @@
 LIBRARY FortunaOracle
 EXPORTS
+    FortunaOracleGenerateIntegrated
+    FortunaOracleGetIntegratedSnapshot
+    FortunaOracleGetIntegratedProbability
     FortunaOracleGetAbiVersion
     FortunaOracleGetEngineVersion
     FortunaOracleGetAdvancedVersion
