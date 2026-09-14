@@ -60,8 +60,15 @@ FN ReadEngineProgress
 FN StartupCheck
     call FortunaOracleGetAbiVersion
     cmp eax,0x10000
-    sete al
-    movzx eax,al
+    jne .startup_fail
+    call EnsureLicensed
+    test eax,eax
+    jz .startup_fail
+    mov eax,1
+    jmp .startup_out
+.startup_fail:
+    xor eax,eax
+.startup_out:
     END
 FN SelfTest
     call FortunaOracleSelfTest
