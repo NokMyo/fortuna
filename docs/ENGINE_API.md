@@ -2,6 +2,8 @@
 
 `FortunaOracle.dll` is a standalone, pure x86-64 assembly analysis library. It does not load Febius Fortuna, create windows, open dialogs or depend on a C/C++ runtime. Its only runtime dependencies are Windows Kernel32 and Advapi32. The GUI is a separate client of this public ABI.
 
+The same API is also available in `FortunaOracleStatic.lib` for embedding in a single application executable. When using the header for static linkage define `FORTUNA_ORACLE_STATIC`. No DLL is then required at runtime.
+
 ## Distribution and versioning
 
 - Application: **Febius Fortuna 1.1.0** (`FebiusFortuna.exe`).

@@ -1,9 +1,0 @@
-.intel_syntax noprefix
-.equ WINDOWS,1
-.include "src/abi.inc"
-.include "src/app_state.inc"
-.include "src/app_util.inc"
-.include "src/strings.inc"
-.include "src/windows.inc"
-.include "src/engine_bridge.inc"
-.include "src/ui.inc"

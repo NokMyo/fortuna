@@ -1,3 +1,17 @@
+.globl FortunaOracleGetAbiVersion
+.globl FortunaOracleGetEngineVersion
+.globl FortunaOracleInitialize
+.globl FortunaOracleLoadCsv
+.globl FortunaOracleLoadCsvFileW
+.globl FortunaOracleAnalyze
+.globl FortunaOracleCancel
+.globl FortunaOracleGenerate
+.globl FortunaOracleGetSnapshot
+.globl FortunaOracleGetProgress
+.globl FortunaOracleGetReport
+.globl FortunaOracleSealW
+.globl FortunaOracleUseUniform
+.globl FortunaOracleSelfTest
 # Public ABI v1. All heavy state is private to this DLL, not exported to clients.
 # One state per process. Mutating calls are serialized; concurrent calls fail busy.
 .section .bss

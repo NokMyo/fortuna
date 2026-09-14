@@ -1,0 +1,17 @@
+.intel_syntax noprefix
+.equ WINDOWS,1
+.include "src/core.inc"
+.include "src/hash.inc"
+.include "src/data.inc"
+.include "src/stats.inc"
+.include "src/linalg.inc"
+.include "src/models.inc"
+.include "src/field.inc"
+.include "src/robust.inc"
+.include "src/sample.inc"
+.include "src/validation.inc"
+.include "src/report.inc"
+.include "src/ledger.inc"
+.include "src/selftest.inc"
+.include "src/io.inc"
+.include "src/api.inc"

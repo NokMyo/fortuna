@@ -1,12 +1,10 @@
 build/
-*.obj
-*.exe
-*.pdb
-*.ilk
+dist/
 __pycache__/
 *.pyc
-dist/
+*.obj
 *.dll
 *.lib
+*.exe
 *.exp
 *.map

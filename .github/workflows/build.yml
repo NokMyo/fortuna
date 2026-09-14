@@ -1,4 +1,4 @@
-name: Windows app and independent ORACLE engine
+name: ORACLE engine verification
 on:
   push:
     branches: [main, 'codex/**']
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 jobs:
-  engine:
+  math:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -24,55 +24,18 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
-      - name: Build pure x86-64 assembly executable
-        shell: cmd
+      - shell: cmd
         run: build.bat
-      - name: Verify executable and native window
-        shell: pwsh
-        run: ./scripts/test-windows.ps1
-      - name: Package Windows release
-        shell: pwsh
-        run: ./scripts/package.ps1
+      - shell: pwsh
+        run: |
+          python tests/dll-windows.py
+          if ($LASTEXITCODE -ne 0) { throw 'DLL tests failed' }
+          $p = Start-Process build/oracle-example.exe -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw 'Example failed' }
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: fortuna-windows-x64
+          name: FortunaOracle-engine
           path: |
-            build/FebiusFortuna.exe
             build/FortunaOracle.dll
             build/FortunaOracle.lib
-            build/fortuna-windows.png
-            build/gui-tickets.txt
-            build/imports.txt
-            build/한글 경로/report.txt
-            dist/*.zip
-            dist/SHA256SUMS.txt
-  release:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: [engine, windows]
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: fortuna-windows-x64
-          path: release-files
-      - name: Publish verified version
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          engine_version=$(tr -d '\r\n' < engine/VERSION)
-          version=$(tr -d '\r\n' < VERSION)
-          if gh release view "v$version" >/dev/null 2>&1; then
-            echo "Release v$version already exists; retaining immutable release."
-            exit 0
-          fi
-          gh release create "v$version" \
-            release-files/build/FortunaOracle.dll \
-            "release-files/dist/FebiusFortuna-$version-windows-x64.zip" \
-            "release-files/dist/FortunaOracle-Engine-$engine_version-windows-x64-sdk.zip" \
-            release-files/dist/SHA256SUMS.txt \
-            --target "$GITHUB_SHA" --title "Febius Fortuna $version" \
-            --notes-file docs/RELEASE_NOTES.md --latest
+            build/FortunaOracleStatic.lib
