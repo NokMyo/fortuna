@@ -1,7 +1,6 @@
 # Microsoft x64 ABI throughout. All nonvolatile GPRs are preserved. SSE2 only.
 # Frame local storage starts at rsp+32; n must be a multiple of 16.
 .macro FN name, n=0
-    .globl \name
 .ifdef WINDOWS
     .seh_proc \name
 .endif

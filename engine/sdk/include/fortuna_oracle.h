@@ -15,7 +15,11 @@ extern "C" {
 #define FO_NOT_READY (-4)
 #define FO_RANDOM_FAILED (-5)
 #define FO_CANCELLED (-6)
+#ifdef FORTUNA_ORACLE_STATIC
+#define FO_API
+#else
 #define FO_API __declspec(dllimport)
+#endif
 #pragma pack(push, 8)
 typedef struct FortunaOracleSnapshot {
  uint32_t size, abi_version, engine_version, flags;

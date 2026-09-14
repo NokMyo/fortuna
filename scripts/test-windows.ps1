@@ -1,17 +1,15 @@
 $ErrorActionPreference = 'Stop'
-$exe = (Resolve-Path build/FebiusFortuna.exe).Path
+New-Item -ItemType Directory -Force build/standalone | Out-Null
+Copy-Item build/FebiusFortuna.exe build/standalone/FebiusFortuna.exe
+$exe = (Resolve-Path build/standalone/FebiusFortuna.exe).Path
 function Run-Checked([string]$arguments, [int]$expected = 0) {
     $p = Start-Process -FilePath $exe -ArgumentList $arguments -PassThru
     if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "Timed out: $arguments" }
     if ($p.ExitCode -ne $expected) { python tests/debug-windows.py $exe $arguments; throw "Exit $($p.ExitCode), expected $expected : $arguments" }
 }
-$example = Start-Process -FilePath (Resolve-Path build/oracle-example.exe).Path -PassThru -Wait
-if ($example.ExitCode -ne 0) { throw 'Assembly SDK example failed' }
 Run-Checked '--self-test'
-python tests/dll-windows.py
-if ($LASTEXITCODE -ne 0) { throw 'Independent DLL test failed' }
 New-Item -ItemType Directory -Force 'build/한글 경로' | Out-Null
-Copy-Item data/SYNTHETIC-example.csv 'build/한글 경로/시험.csv'
+Copy-Item engine/data/SYNTHETIC-example.csv 'build/한글 경로/시험.csv'
 Run-Checked '--analyze "build/한글 경로/시험.csv" "build/한글 경로/report.txt"'
 $report = Get-Content -Raw -Encoding utf8 'build/한글 경로/report.txt'
 if ($report -notmatch 'Candidate-field SHA-256' -or $report -notmatch 'Independent policy confirmation') { throw 'Incomplete report' }
@@ -20,10 +18,7 @@ Run-Checked '--analyze build/invalid.csv build/invalid-report.txt' 1
 if (Test-Path build/invalid-report.txt) { throw 'Rejected CSV produced a report' }
 Run-Checked '--unknown-argument' 2
 $imports = (& dumpbin /imports $exe | Out-String)
-if ($imports -notmatch 'FortunaOracle.dll') { throw 'App does not import the independent engine' }
-$dllImports = (& dumpbin /imports build/FortunaOracle.dll | Out-String)
-if ($dllImports -match '(?i)(user32|gdi32|comdlg32|shell32|msvcrt|vcruntime|ucrtbase|api-ms-win-crt)') { throw 'Engine depends on GUI or CRT' }
-$imports += $dllImports
+if ($imports -match '(?i)FortunaOracle.dll') { throw 'App must include the engine; external engine DLL dependency found' }
 $imports | Set-Content build/imports.txt
 if ($imports -match '(?i)(msvcrt|vcruntime|ucrtbase|api-ms-win-crt)') { throw 'Unexpected C runtime dependency' }
 # Exercise the actual window, controls, bundle generation and clipboard.

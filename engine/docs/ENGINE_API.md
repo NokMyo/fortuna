@@ -2,21 +2,23 @@
 
 `FortunaOracle.dll` is a standalone, pure x86-64 assembly analysis library. It does not load Febius Fortuna, create windows, open dialogs or depend on a C/C++ runtime. Its only runtime dependencies are Windows Kernel32 and Advapi32. The GUI is a separate client of this public ABI.
 
+The same API is also available in `FortunaOracleStatic.lib` for embedding in a single application executable. When using the header for static linkage define `FORTUNA_ORACLE_STATIC`. No DLL is then required at runtime.
+
 ## Distribution and versioning
 
-- Application: **Febius Fortuna 1.1.0** (`FebiusFortuna.exe`).
+- Application: **Febius Fortuna 1.2.0** (`FebiusFortuna.exe`).
 - Engine: **Fortuna ORACLE Engine 1.0.0** (`FortunaOracle.dll`).
 - Binary interface: **ABI 1.0**, `0x00010000`.
 
-The application ZIP contains both EXE and DLL. Keep them together. The engine SDK ZIP contains the DLL, MSVC import library, export definition, declaration header and a standalone assembly client. The DLL itself is independently usable; the SDK does not require the GUI.
+The application embeds the static engine in its EXE; its ZIP requires no engine DLL. Engine source, documentation, tests and SDK live under `engine/` in the same Fortuna repository. Run `engine/build.bat sdk` to build a developer DLL, import library and standalone assembly client.
 
 Engine/application releases are separately identified. Version integers encode major in bits 16–31, minor in 8–15 and patch in 0–7. Clients must check the exact supported ABI before using structures; ABI 1.0 structures are immutable. Future incompatible layouts require a different ABI. Do not replace DLLs based only on matching filenames.
 
 ## ABI and ownership
 
-All entry points use the standard Microsoft Windows x64 calling convention and exact undecorated names in `FortunaOracle.def`. `include/fortuna_oracle.h` declares the ABI for clients in other languages; it is not an engine implementation. The library never returns a private-state pointer or a memory allocation that the caller must free. Buffers and filenames belong to the caller and must remain valid throughout a call.
+All entry points use the standard Microsoft Windows x64 calling convention and exact undecorated names in `FortunaOracle.def`. `sdk/include/fortuna_oracle.h` declares the ABI for clients in other languages; it is not an engine implementation. The library never returns a private-state pointer or a memory allocation that the caller must free. Buffers and filenames belong to the caller and must remain valid throughout a call.
 
-There is **one engine state per loaded DLL per process**. Multiple consumers in the same process share that state. This version has no multi-context handles. Use separate processes for isolated concurrent analyses. Do not unload the DLL while any call or client thread is active.
+There is **one engine state per linked engine module per process**. Multiple consumers in the same process share that state. This version has no multi-context handles. Use separate processes for isolated concurrent analyses. Do not unload the DLL while any call or client thread is active.
 
 Initialize before normal operations. Initialization is idempotent and performs lightweight hash/combinatorial/OS-entropy checks without loading data. It does not reset an already initialized engine. Mutating operations and snapshots use a private exclusive SRW lock; concurrent calls return `FO_BUSY` instead of racing or blocking. `Cancel`, `GetProgress` and version queries are callable while analysis runs. Run blocking analysis on a caller-owned worker thread.
 
