@@ -918,7 +918,7 @@ FN TiAIS,64
 FN IntegratedAnalyze
     mov ebp,ecx
     lea rcx,[rip+ti_begin]
-    mov edx,TI_BYTES
+    mov edx,offset TI_BYTES
     call Zero
     mov [rip+ti_profile],ebp
     mov eax,[rip+history_count]
@@ -949,7 +949,7 @@ FN IntegratedAnalyze
     mov [rip+ti_saved_logz],rax
     lea rcx,[rip+ti_saved_joint_state]
     lea rdx,[rip+joint_coef]
-    mov r8d,TI_JOINT_STATE_BYTES
+    mov r8d,offset TI_JOINT_STATE_BYTES
     call Copy
     mov eax,[rip+joint_order]
     mov [rip+ti_saved_order],eax
@@ -1073,7 +1073,7 @@ FN IntegratedAnalyze
     mov [rip+joint_logz],rax
     lea rcx,[rip+joint_coef]
     lea rdx,[rip+ti_saved_joint_state]
-    mov r8d,TI_JOINT_STATE_BYTES
+    mov r8d,offset TI_JOINT_STATE_BYTES
     call Copy
     mov eax,[rip+ti_saved_order]
     mov [rip+joint_order],eax

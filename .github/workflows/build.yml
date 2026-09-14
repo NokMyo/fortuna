@@ -40,7 +40,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Engine API tests failed' }
           python engine/tests/research-windows.py
           if ($LASTEXITCODE -ne 0) { throw 'Research API tests failed' }
-          dumpbin /disasm engine/build/FortunaOracle.dll > build/engine-disassembly.txt
           python engine/tests/integrated-windows.py
           if ($LASTEXITCODE -ne 0) { throw 'Integrated ten-function API tests failed' }
           $p = Start-Process engine/build/oracle-example.exe -Wait -PassThru
@@ -60,7 +59,6 @@ jobs:
             build/fortuna-windows.png
             build/gui-tickets.txt
             build/imports.txt
-            build/engine-disassembly.txt
             build/한글 경로/report.txt
             dist/*.zip
             dist/SHA256SUMS.txt
@@ -76,24 +74,6 @@ jobs:
         with:
           name: fortuna-windows-x64
           path: release-files
-      - name: Remove older releases
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          current=$(tr -d '\r\n' < VERSION)
-          gh release list --limit 100 --json tagName --jq '.[].tagName' | while IFS= read -r tag; do
-            version="${tag#v}"
-            if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-              continue
-            fi
-            if [ "$version" = "$current" ]; then
-              continue
-            fi
-            first=$(printf '%s\n%s\n' "$version" "$current" | sort -V | head -n1)
-            if [ "$first" = "$version" ]; then
-              gh release delete "$tag" --yes
-            fi
-          done
       - name: Publish verified version
         env:
           GH_TOKEN: ${{ github.token }}

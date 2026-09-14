@@ -11,32 +11,6 @@ root=pathlib.Path(__file__).resolve().parents[1]
 dll=C.WinDLL(str(root/'build/FortunaOracle.dll'))
 def api(name,args=()):
     f=getattr(dll,'FortunaOracle'+name);f.argtypes=list(args);f.restype=C.c_int32;return f
-# Capture the faulting instruction and integer registers for Windows ABI failures.
-handler_type=C.WINFUNCTYPE(C.c_long,C.c_void_p)
-@handler_type
-def fault_context(ptr):
-    pointers=C.cast(ptr,C.POINTER(C.c_void_p))
-    record=C.cast(pointers[0],C.POINTER(C.c_uint32))
-    if record[0]==0xc0000005:
-        context=pointers[1]
-        regs={name:hex(C.c_uint64.from_address(context+offset).value) for name,offset in [('rax',120),('rcx',128),('rdx',136),('rbx',144),('rsp',152),('rbp',160),('rsi',168),('rdi',176),('r8',184),('r9',192),('r10',200),('r11',208),('r12',216),('r13',224),('r14',232),('r15',240),('rip',248)]}
-        regs['rip_rva']=hex(int(regs['rip'],16)-dll._handle)
-        print('Windows fault context:',regs,flush=True)
-        print('Fault bytes:',C.string_at(int(regs['rip'],16)-32,96).hex(),flush=True)
-        import re
-        binary=(root/'build/FortunaOracle.dll').read_bytes()
-        pe=struct.unpack_from('<I',binary,0x3c)[0]
-        base=struct.unpack_from('<Q',binary,pe+48)[0]
-        target=base+int(regs['rip_rva'],16)
-        lines=(root.parent/'build/engine-disassembly.txt').read_text(encoding='utf-16' if (root.parent/'build/engine-disassembly.txt').read_bytes()[:2]==b'\\xff\\xfe' else 'utf-8',errors='replace').splitlines()
-        for line in lines:
-            match=re.match(r'\\s*([0-9A-Fa-f]{8,16}):',line)
-            if '9062' in line.lower() or (match and abs(int(match[1],16)-target)<100):print(line,flush=True)
-        print('Disassembly head:',lines[:25],flush=True)
-    return 0
-C.windll.kernel32.AddVectoredExceptionHandler.argtypes=[C.c_ulong,handler_type]
-C.windll.kernel32.AddVectoredExceptionHandler.restype=C.c_void_p
-fault_handle=C.windll.kernel32.AddVectoredExceptionHandler(1,fault_context)
 init=api('Initialize');assert init()==0
 load=api('LoadCsv',(C.c_void_p,C.c_uint64))
 normal=api('AnalyzeAdvanced')
