@@ -1,3 +1,11 @@
+# 1.5.0 / engine 1.3.0
+
+- 일반·심층 ORACLE에 Advanced Evidence Layer(AEL)를 적용.
+- prefix-only 4차 조합 상호작용과 계층적 shrinkage·불확실성 전파 추가.
+- 4구간 시간 안정성 및 4,096/8,192 synthetic-null 스트레스 검증 추가.
+- 빠른 후보장을 4,096에서 최대 8,192로 확장하고 2,048개 고급 재평가 단계 및 2-swap 전수 이웃 탐색 추가.
+- 상위 두 모델 제거 민감도 기반 후보 안정성 보정과 deep joint sampling의 검증된 AEL 결합 추가.
+
 # 1.4.2 / engine 1.2.0
 
 - 보안 취약점 수정.

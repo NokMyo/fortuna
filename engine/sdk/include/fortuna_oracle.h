@@ -7,6 +7,7 @@
 extern "C" {
 #endif
 #define FORTUNA_ORACLE_ABI_V1 0x00010000u
+#define FORTUNA_ORACLE_ADVANCED_V1_3 0x00010300u
 #define FO_OK 0
 #define FO_REUSED 1
 #define FO_INVALID_ARGUMENT (-1)
@@ -45,15 +46,24 @@ typedef struct FortunaOracleResearchSnapshot {
 #pragma pack(pop)
 FO_API uint32_t FortunaOracleGetAbiVersion(void);
 FO_API uint32_t FortunaOracleGetEngineVersion(void);
+/* Additive AEL capability version. 0x00010300 = Advanced Evidence Layer 1.3. */
+FO_API uint32_t FortunaOracleGetAdvancedVersion(void);
 FO_API int32_t FortunaOracleInitialize(void);
 FO_API int32_t FortunaOracleLoadCsv(const void *utf8, uint64_t bytes);
 FO_API int32_t FortunaOracleLoadCsvFileW(const wchar_t *path);
+/* Legacy ABI-v1 analysis entry point retained for compatibility. */
 FO_API int32_t FortunaOracleAnalyze(void);
+/* Strengthened normal ORACLE: prefix validation + AEL + deeper field search. */
+FO_API int32_t FortunaOracleAnalyzeAdvanced(void);
 /* Expensive synchronous suite. flags=0 audited fast scan, 1 full deep scan. */
 FO_API int32_t FortunaOracleAnalyzeResearch(uint32_t flags);
+/* Strengthened deep ORACLE with the AEL validation/search layer. */
+FO_API int32_t FortunaOracleAnalyzeResearchAdvanced(uint32_t flags);
 /* Valid six-number 45-bit mask, writes two doubles; research must be ready. */
 /* Independent research draws, possible duplicates, unvalidated forecast model. */
 FO_API int32_t FortunaOracleGenerateResearch(uint32_t count, uint64_t *masks, uint32_t capacity);
+/* Research draw with bounded AEL rejection only when AEL evidence survived. */
+FO_API int32_t FortunaOracleGenerateResearchAdvanced(uint32_t count, uint64_t *masks, uint32_t capacity);
 FO_API int32_t FortunaOracleGetJointProbability(uint64_t mask, double out[2]);
 /* append=0 audits an existing local ledger; 1 also freezes the next forecast.
    0 success, 1 already pending, negative failure. See snapshot for evidence. */
