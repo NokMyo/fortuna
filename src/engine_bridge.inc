@@ -57,11 +57,20 @@ FN ReadEngineProgress
     mov eax,[rip+api_progress+8]
     mov [rip+validation_count],eax
     END
+
+# Production callers must never inherit the historical smoke-mode auth bypass.
+FN StrictLicenseCheck
+    mov ebx,[rip+smoke_mode]
+    mov dword ptr [rip+smoke_mode],0
+    call EnsureLicensed
+    mov [rip+smoke_mode],ebx
+    END
+
 FN StartupCheck
     call FortunaOracleGetAbiVersion
     cmp eax,0x10000
     jne .startup_fail
-    call EnsureLicensed
+    call StrictLicenseCheck
     test eax,eax
     jz .startup_fail
     mov eax,1
