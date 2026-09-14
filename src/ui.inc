@@ -428,6 +428,7 @@ FN DialogProc,128
     test eax,eax
     jz .dp_rng
 .dp_update:
+    call UpdateDrawProgress
     call UpdateResultUI
     lea rcx,[rip+text_generated]
     call Notify
@@ -622,6 +623,7 @@ FN DialogProc,128
     je .dp_close
     cmp dword ptr [rip+worker_result],1
     jne .dp_canceled
+    call UpdateDrawProgress
     call UpdateResultUI
     lea rcx,[rip+text_done]
     call Notify
@@ -732,3 +734,18 @@ FN UpdateDataUI,16
     lea r8,[rip+ui_status]
     call SetDlgItemTextW
     END 16
+
+FN UpdateDrawProgress
+    xor ebx,ebx
+    cmp dword ptr [rip+app_draw_kind],0
+    je 1f
+    mov ebx,100
+1:  mov rcx,[rip+h_main]
+    mov edx,1106
+    call GetDlgItem
+    mov rcx,rax
+    mov edx,0x402
+    mov r8d,ebx
+    xor r9d,r9d
+    call SendMessageW
+    END
