@@ -18,6 +18,7 @@ jobs:
       - run: python engine/tests/native.py
       - run: python engine/tests/advanced.py
       - run: python engine/tests/integrated.py
+      - run: python engine/tests/depth.py
       - run: python engine/tests/engine.py
       - run: python engine/tests/research.py
   windows:

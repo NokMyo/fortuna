@@ -66,7 +66,8 @@ for row in rows[:60]:
     variance=gain*.75*.25
 assert np.allclose(array(lib,'ti_state',8),mean,atol=1e-13)
 assert np.allclose(array(lib,'ti_state_var',8),variance,atol=1e-13)
-assert np.allclose(coef[3,:8],np.clip(.5*(mean-.75),-.05,.05),atol=1e-13)
+# The dynamic family also uses multiscale graph estimates, verified in depth.py.
+assert np.allclose(coef[3,:8],np.clip(.5*(np.array(array(lib,'depth_rates',8))-.75),-.05,.05),atol=1e-13)
 
 # Future rows must not affect any fitted basis, normalizer or posterior.
 saved=(coef.copy(),logz.copy(),post.copy())

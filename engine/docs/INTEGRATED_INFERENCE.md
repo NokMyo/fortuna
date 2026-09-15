@@ -1,6 +1,9 @@
 # Integrated ten-function inference 1.0
 
-App 1.6.0 / Engine 1.4.0 / public ABI 1.0.
+App 1.7.0 / Engine 1.5.0 / public ABI 1.0.
+
+The [depth extension](DEPTH_VALIDATION.md) adds multiscale/graph correction,
+compensated partition derivatives and causal/bootstrap gates to this base layer.
 
 Both product ORACLE buttons execute this layer by default after the existing
 normal/research analysis and Advanced Evidence Layer. The random button remains
@@ -32,7 +35,7 @@ claims of exact continuous Bayesian inference or of a lottery prediction edge.
 |---|---:|---:|
 | Families, plus uniform | 4 + 1 | 4 + 1 |
 | Scale values | 0, 0.5, 1 | 0, 0.5, 1, 1.5, 2 |
-| Most recent chronological validation rows | up to 2 | up to 8 |
+| Most recent chronological validation rows | up to 8 | up to 16 |
 | Complete synthetic-history refits | 2 | 8 |
 | AIS paths / intermediate levels | 8 / 8 | 64 / 32 |
 | Ordinary / robust weight iterations | 40 / 40 | 40 / 40 |
@@ -82,6 +85,8 @@ For each observation: P'=P+Q, K=P'/(P'+R), m'=m+K(y-m), P_new=K R.
 This is a marginal Gaussian working filter for binary observations, not an exact
 joint Bernoulli state posterior. Final probabilities obey the six-ball constraint
 because the final joint normalization still enumerates only six-subsets.
+Since engine 1.5, Kalman rates are blended with four discounted beta estimates
+and graph-regularized before forming the dynamic coefficients; see the extension.
 
 ## Stacking and robustness
 
@@ -104,6 +109,8 @@ most 1-rho; it is reduced by null support and is zero unless there are at least
 two chronological rows and positive outer gain. This cannot reopen an original
 uniform-only gate, but it is not independent proof that the new mixture improves
 prediction. Deep: P = 0.5 uniform + 0.5 P_integrated (research, unvalidated).
+Engine 1.5 additionally requires available bootstrap_low>0 and adjusted sequential
+p<=.05 before allowing nonzero normal alpha. These tests only close existing gates.
 
 Sampling first selects the family and scale, then uses exact rejection with a
 global energy bound. Singleton/pair/triple caps imply |E| <= 0.8; scales reach

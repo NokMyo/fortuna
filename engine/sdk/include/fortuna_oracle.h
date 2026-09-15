@@ -78,6 +78,9 @@ FO_API int32_t FortunaOracleGenerate(uint32_t count, uint64_t *masks, uint32_t c
 FO_API int32_t FortunaOracleGenerateIntegrated(uint32_t count, uint64_t *masks, uint32_t capacity);
 FO_API int32_t FortunaOracleGetIntegratedSnapshot(void *out, uint32_t bytes);
 FO_API int32_t FortunaOracleGetIntegratedProbability(uint64_t mask, double *out);
+/* 96 bytes: eight uint32_t followed by eight double. See DEPTH_VALIDATION.md.
+   Requires completed integrated analysis; no write on argument/busy/state error. */
+FO_API int32_t FortunaOracleGetDepthSnapshot(void *out, uint32_t bytes);
 FO_API int32_t FortunaOracleGetSnapshot(FortunaOracleSnapshot *out, uint32_t bytes);
 FO_API int32_t FortunaOracleGetProgress(FortunaOracleProgress *out, uint32_t bytes);
 /* Positive return = required UTF-8 bytes INCLUDING NUL; negative = error.

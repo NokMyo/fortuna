@@ -1,4 +1,8 @@
-# Fortuna ORACLE Engine 1.4.0 — Windows x64 SDK
+# Fortuna ORACLE Engine 1.5.0 — Windows x64 SDK
+
+`FortunaOracleGetDepthSnapshot(out,bytes)` exposes 96-byte diagnostics after
+completed integrated analysis. See [layout, errors and equations](DEPTH_VALIDATION.md).
+The existing integrated snapshot remains 64 bytes; ABI 1.0 is unchanged.
 
 The application's normal/deep routes now use the [integrated ten-function layer](INTEGRATED_INFERENCE.md).
 `AnalyzeAdvanced` / `AnalyzeResearchAdvanced` execute it by default;
@@ -14,7 +18,7 @@ The same API is also available in `FortunaOracleStatic.lib` for embedding in a s
 ## Distribution and versioning
 
 - Application: **Febius Fortuna 1.3.0** (`FebiusFortuna.exe`).
-- Engine: **Fortuna ORACLE Engine 1.1.0** (`FortunaOracle.dll`).
+- Engine: **Fortuna ORACLE Engine 1.5.0** (`FortunaOracle.dll`).
 - Binary interface: **ABI 1.0**, `0x00010000`.
 
 The application embeds the static engine in its EXE; its ZIP requires no engine DLL. Engine source, documentation, tests and SDK live under `engine/` in the same Fortuna repository. Run `engine/build.bat sdk` to build a developer DLL, import library and standalone assembly client.

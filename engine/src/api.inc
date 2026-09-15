@@ -23,7 +23,7 @@ FN FortunaOracleGetAbiVersion
     mov eax,0x10000
     END
 FN FortunaOracleGetEngineVersion
-    mov eax,0x10400
+    mov eax,0x10500
     END
 FN ApiLock
     lea rcx,[rip+api_lock]
@@ -174,7 +174,7 @@ FN FortunaOracleGetSnapshot
     call Zero
     mov dword ptr [rbx],272
     mov dword ptr [rbx+4],0x10000
-    mov dword ptr [rbx+8],0x10400
+    mov dword ptr [rbx+8],0x10500
     mov eax,[rip+model_ready]
     shl eax,1
     or eax,[rip+field_ready]

@@ -15,6 +15,7 @@
 .include "src/advanced.inc"
 .include "src/advanced_fix.inc"
 .include "src/integrated.inc"
+.include "src/depth.inc"
 .include "src/report.inc"
 .include "src/ledger.inc"
 .include "src/selftest.inc"
@@ -23,3 +24,4 @@
 .include "src/api.inc"
 .include "src/advanced_api.inc"
 .include "src/integrated_api.inc"
+.include "src/depth_api.inc"

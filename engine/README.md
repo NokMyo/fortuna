@@ -1,4 +1,7 @@
-# Fortuna ORACLE Engine 1.4.0
+# Fortuna ORACLE Engine 1.5.0
+
+양쪽 기본 ORACLE 경로에 다중 기간·관계 보정과 순차 검증을 추가했습니다.
+[수식·계산량·API·검증 명세](docs/DEPTH_VALIDATION.md)
 
 일반·심층 기본 경로의 [열 가지 통합 추론 기능](docs/INTEGRATED_INFERENCE.md)을
 `integrated.inc`에서 구현합니다. 네 모형의 유한 계수 사후분포를 시간순으로
