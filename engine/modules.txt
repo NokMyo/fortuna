@@ -13,6 +13,7 @@ validation
 advanced
 advanced_fix
 integrated
+depth
 report
 ledger
 selftest
@@ -21,3 +22,4 @@ forecast
 api
 advanced_api
 integrated_api
+depth_api

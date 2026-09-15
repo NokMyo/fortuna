@@ -6,7 +6,7 @@
 .equ TI_FOLDS,16
 .section .data
 ti_grid_count: .long 3
-ti_fold_limit: .long 2
+ti_fold_limit: .long 8
 ti_null_limit: .long 2
 ti_ais_runs: .long 8
 ti_ais_steps: .long 8
@@ -444,10 +444,14 @@ FN TiDynamic
     inc esi
     cmp esi,[rip+ti_n]
     jb 2b
+    call DepthDynamic
+    test eax,eax
+    jz .tid_out
     mov ecx,3
-    lea rdx,[rip+ti_state]
+    lea rdx,[rip+depth_rates]
     call TiRatesToCoef
-    END
+    mov eax,1
+.tid_out: END
 
 # Fit all four bases and all finite posterior support points using prefix [0,n).
 FN TiFit,64
@@ -463,6 +467,8 @@ FN TiFit,64
     call TiTensor
     call TiChangepoint
     call TiDynamic
+    test eax,eax
+    jz .tif_fail
     mov ecx,[rip+joint_universe]
     mov edx,6
     call Choose
@@ -474,6 +480,7 @@ FN TiFit,64
     lea rcx,[rip+ti_z]
     mov edx,TI_GRID*8
     call Zero
+    call DepthMomentsReset
     mov qword ptr [rsp+32],0
     xor esi,esi
 .tif_data:
@@ -507,9 +514,9 @@ FN TiFit,64
     movsd xmm0,[rax+rsi*8]
     mulsd xmm0,[rsp+40]
     call Exp
-    lea rax,[rip+ti_z]
-    addsd xmm0,[rax+rsi*8]
-    movsd [rax+rsi*8],xmm0
+    movsd xmm1,[rsp+40]
+    mov ecx,esi
+    call DepthAccumulate
     inc esi
     cmp esi,[rip+ti_grid_count]
     jb .tif_grid
@@ -537,6 +544,10 @@ FN TiFit,64
     movsd [rip+ti_logspace],xmm0
     mov [rip+ti_enum_count],r14
     call TiBounds
+    mov ecx,r12d
+    call DepthMomentsSave
+    test eax,eax
+    jz .tif_fail
     xor esi,esi
     movsd xmm0,[rip+research_large]
     xorpd xmm0,[rip+sign_bits]
@@ -593,6 +604,10 @@ FN TiFit,64
     inc esi
     cmp esi,[rip+ti_grid_count]
     jb .tif_norm
+    mov ecx,r12d
+    call DepthAuditFamily
+    test eax,eax
+    jz .tif_fail
     inc r12d
     cmp r12d,TI_FAMILIES
     jb .tif_family
@@ -926,14 +941,14 @@ FN IntegratedAnalyze
     jb .tin_early_fail
     mov [rip+ti_real_n],eax
     mov dword ptr [rip+ti_grid_count],3
-    mov dword ptr [rip+ti_fold_limit],2
+    mov dword ptr [rip+ti_fold_limit],8
     mov dword ptr [rip+ti_null_limit],2
     mov dword ptr [rip+ti_ais_runs],8
     mov dword ptr [rip+ti_ais_steps],8
     test ebp,ebp
     jz 1f
     mov dword ptr [rip+ti_grid_count],5
-    mov dword ptr [rip+ti_fold_limit],8
+    mov dword ptr [rip+ti_fold_limit],16
     mov dword ptr [rip+ti_null_limit],8
     mov dword ptr [rip+ti_ais_runs],64
     mov dword ptr [rip+ti_ais_steps],32
@@ -1031,6 +1046,9 @@ FN IntegratedAnalyze
     call TiAIS
     test eax,eax
     jz .tin_fail
+    call DepthFinalize
+    test eax,eax
+    jz .tin_fail
     movsd xmm0,[rip+half]
     cmp dword ptr [rip+ti_profile],0
     jne 6f
@@ -1041,6 +1059,15 @@ FN IntegratedAnalyze
     movsd xmm1,[rip+one]
     subsd xmm1,[rip+ti_null_p]
     mulsd xmm0,xmm1
+    # Additional validation can only close the original normal evidence gate.
+    cmp dword ptr [rip+depth_boot_done],0
+    je .tin_no_support
+    movsd xmm1,[rip+depth_anytime_p]
+    comisd xmm1,[rip+depth_threshold]
+    ja .tin_no_support
+    movsd xmm1,[rip+depth_boot_low]
+    comisd xmm1,[rip+zero]
+    jbe .tin_no_support
     cmp dword ptr [rip+ti_folds],2
     jb .tin_no_support
     movsd xmm1,[rip+ti_gain]
@@ -1226,6 +1253,7 @@ FN IntegratedReport
     jb .tir_family
     lea rcx,[rip+ti_report_limits]
     call Text
+    call DepthReport
 .tir_out: END
 
 # Actual single-game law, including the legacy field policy in normal mode.
