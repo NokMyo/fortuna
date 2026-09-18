@@ -1076,7 +1076,7 @@ Seed=SHA256("Fortuna"\|Round\|DatasetHash\|EngineVersion)
 
 ## 25.2 User Recalculate randomness [CURRENT]
 
-Windows CSPRNG (`RtlGenRandom` / `SystemFunction036`)를 사용한다.
+Windows CSPRNG (`BCryptGenRandom` with `BCRYPT_USE_SYSTEM_PREFERRED_RNG`)를 사용한다.
 
 Uniform 6/45 샘플 생성 시 modulo bias를 금지하고 rejection sampling을 사용한다.
 

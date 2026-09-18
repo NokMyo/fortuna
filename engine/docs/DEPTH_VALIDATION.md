@@ -1,4 +1,4 @@
-# Depth validation 1.0 — app 1.7.0 / engine 1.5.0
+# Depth validation 1.0 — app 1.7.1 / engine 1.5.1
 
 This layer extends the existing ten-function pipeline in **both** product ORACLE
 modes. `src/depth.inc` and `src/depth_api.inc` are x64 assembly. Python is used

@@ -28,7 +28,7 @@ Windows 10 1607+ x64 is the minimum because the UI uses `GetDpiForWindow`. The p
 
 The [CSV contract](../data/FORMAT.md) specifies limits and canonical hashing. Input is staged; failure leaves the previous dataset intact. Contiguous round order and Gregorian dates are validated. Source authenticity, prize fields, official calendar verification, automatic HTTP refresh, provider failover, provenance signatures and a separate dataset-manifest file are not implemented. Reports carry the canonical hash, record count, last/target round and configuration hash.
 
-Session draws call Windows `SystemFunction036`. Unsigned rejection sampling removes modulo bias, and six distinct numbers are sampled into a 45-bit mask. Entropy failure returns an error, never a fixed fallback combination. SplitMix64 is reserved for deterministic null experiments, alternate histories and sealed selections. It is not represented as a cryptographic random stream.
+Session draws call Windows `BCryptGenRandom` with `BCRYPT_USE_SYSTEM_PREFERRED_RNG`. Unsigned rejection sampling removes modulo bias, and six distinct numbers are sampled into a 45-bit mask. Entropy failure returns an error, never a fixed fallback combination. SplitMix64 is reserved for deterministic null experiments, alternate histories and sealed selections. It is not represented as a cryptographic random stream.
 
 SHA-256 is implemented in assembly. The field identity includes the 512 masks and binary64 probabilities, dataset/config hashes, mixture coefficient, temperature and model weights, with a fixed zero-padded layout. Configuration identity includes the reference version and fixed analysis parameters. For reproducibility archive the executable, CSV, report and checksum together.
 

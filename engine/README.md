@@ -1,4 +1,4 @@
-# Fortuna ORACLE Engine 1.5.0
+# Fortuna ORACLE Engine 1.5.1
 
 양쪽 기본 ORACLE 경로에 다중 기간·관계 보정과 순차 검증을 추가했습니다.
 [수식·계산량·API·검증 명세](docs/DEPTH_VALIDATION.md)

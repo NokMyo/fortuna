@@ -7,4 +7,4 @@ mkdir -p build
 x86_64-w64-mingw32-as fortuna_oracle.s -o build/oracle.obj
 x86_64-w64-mingw32-ar rcs build/libFortunaOracleStatic.a build/oracle.obj
 if [ "${1:-}" != sdk ]; then exit 0; fi
-x86_64-w64-mingw32-ld --dll --entry 0 --dynamicbase --high-entropy-va --nxcompat --no-insert-timestamp --out-implib build/libFortunaOracle.a -L "$FORTUNA_MINGW_LIB" -o build/FortunaOracle.dll build/oracle.obj FortunaOracle.def -lkernel32 -ladvapi32
+x86_64-w64-mingw32-ld --dll --entry 0 --dynamicbase --high-entropy-va --nxcompat --no-insert-timestamp --out-implib build/libFortunaOracle.a -L "$FORTUNA_MINGW_LIB" -o build/FortunaOracle.dll build/oracle.obj FortunaOracle.def -lkernel32 -lbcrypt

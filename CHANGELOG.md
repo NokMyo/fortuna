@@ -1,3 +1,10 @@
+# 1.7.1 / engine 1.5.1
+
+- Windows 세션 CSPRNG를 SystemFunction036/RtlGenRandom에서 BCryptGenRandom으로 교체.
+- PE 체크섬 생성과 ASLR·High Entropy VA·NX 호환 상태 CI 검증 강화.
+- 앱 User-Agent/버전 메타데이터 정리 및 legacy RNG import 회귀 검사 추가.
+- ORACLE 분석 수식, 계정·라이선스 정책, 저장 형식은 변경 없음.
+
 # 1.7.0 / engine 1.5.0
 
 - 양쪽 기본 경로에 다중 기간 베타 추정·시간순 가중·관계 행렬 보정 추가.

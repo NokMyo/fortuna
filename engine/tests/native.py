@@ -10,17 +10,18 @@ def build(extra=()):
     source='.intel_syntax noprefix\n'+ '\n'.join((ROOT/f'src/{m}.inc').read_text() for m in modules)
     source=source.replace('.section .rdata,"dr"','.section .data')
     source+='''\n.section .text
-FN SystemFunction036
-    mov rdi,rcx
-    mov rsi,rdx
-    mov rbx,rdx
+FN BCryptGenRandom
+    mov rdi,rdx
+    mov rsi,r8
     xor edx,edx
     mov eax,318
     syscall
-    cmp rax,rbx
-    sete al
-    movzx eax,al
-    END
+    cmp rax,rsi
+    jne 1f
+    xor eax,eax
+    jmp 2f
+1:  mov eax,-1
+2:  END
 '''
     names=re.findall(r'^FN (\w+)',source,re.M)
     for name in names:

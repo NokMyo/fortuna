@@ -23,7 +23,7 @@ FN FortunaOracleGetAbiVersion
     mov eax,0x10000
     END
 FN FortunaOracleGetEngineVersion
-    mov eax,0x10500
+    mov eax,0x10501
     END
 FN ApiLock
     lea rcx,[rip+api_lock]

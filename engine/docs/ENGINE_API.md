@@ -1,4 +1,4 @@
-# Fortuna ORACLE Engine 1.5.0 — Windows x64 SDK
+# Fortuna ORACLE Engine 1.5.1 — Windows x64 SDK
 
 `FortunaOracleGetDepthSnapshot(out,bytes)` exposes 96-byte diagnostics after
 completed integrated analysis. See [layout, errors and equations](DEPTH_VALIDATION.md).
@@ -11,14 +11,14 @@ expose its actual sampling law and diagnostics. Lower-level legacy APIs remain
 ABI-compatible. The legacy persistent forecast ledger records the legacy joint
 model, not the integrated mixture.
 
-`FortunaOracle.dll` is a standalone, pure x86-64 assembly analysis library. It does not load Febius Fortuna, create windows, open dialogs or depend on a C/C++ runtime. Its only runtime dependencies are Windows Kernel32 and Advapi32. The GUI is a separate client of this public ABI.
+`FortunaOracle.dll` is a standalone, pure x86-64 assembly analysis library. It does not load Febius Fortuna, create windows, open dialogs or depend on a C/C++ runtime. Its only runtime dependencies are Windows Kernel32 and BCrypt. The GUI is a separate client of this public ABI.
 
 The same API is also available in `FortunaOracleStatic.lib` for embedding in a single application executable. When using the header for static linkage define `FORTUNA_ORACLE_STATIC`. No DLL is then required at runtime.
 
 ## Distribution and versioning
 
-- Application: **Febius Fortuna 1.3.0** (`FebiusFortuna.exe`).
-- Engine: **Fortuna ORACLE Engine 1.5.0** (`FortunaOracle.dll`).
+- Application: **Febius Fortuna 1.7.1** (`FebiusFortuna.exe`).
+- Engine: **Fortuna ORACLE Engine 1.5.1** (`FortunaOracle.dll`).
 - Binary interface: **ABI 1.0**, `0x00010000`.
 
 The application embeds the static engine in its EXE; its ZIP requires no engine DLL. Engine source, documentation, tests and SDK live under `engine/` in the same Fortuna repository. Run `engine/build.bat sdk` to build a developer DLL, import library and standalone assembly client.

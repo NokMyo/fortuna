@@ -403,11 +403,13 @@ FN Random64,16
     shr rdx,31
     xor rax,rdx
     jmp 4f
-2:  lea rcx,[rsp+32]
-    mov edx,8
-    call SystemFunction036
-    test al,al
-    jnz 3f
+2:  xor ecx,ecx
+    lea rdx,[rsp+32]
+    mov r8d,8
+    mov r9d,2
+    call BCryptGenRandom
+    test eax,eax
+    jz 3f
     mov dword ptr [rip+rng_error],1
     xor eax,eax
     jmp 4f

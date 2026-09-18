@@ -60,6 +60,7 @@ jobs:
             build/fortuna-windows.png
             build/gui-tickets.txt
             build/imports.txt
+            build/headers.txt
             build/한글 경로/report.txt
             dist/*.zip
             dist/SHA256SUMS.txt
