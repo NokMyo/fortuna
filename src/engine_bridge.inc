@@ -66,6 +66,28 @@ FN StrictLicenseCheck
     mov [rip+smoke_mode],ebx
     END
 
+FN LoadEmbeddedHistory
+    cmp dword ptr [rip+history_count],0
+    jne .embedded_ok
+    lea rcx,[rip+embedded_history_start]
+    lea rdx,[rip+embedded_history_end]
+    sub rdx,rcx
+    call FortunaOracleLoadCsv
+    mov ebx,eax
+    call RefreshEngineState
+    test ebx,ebx
+    jnz .embedded_fail
+    cmp dword ptr [rip+history_count],1242
+    jne .embedded_fail
+    cmp dword ptr [rip+last_round],1242
+    jne .embedded_fail
+.embedded_ok:
+    mov eax,1
+    jmp .embedded_out
+.embedded_fail:
+    xor eax,eax
+.embedded_out: END
+
 FN StartupCheck
     call FortunaOracleGetAbiVersion
     cmp eax,0x10000
@@ -74,6 +96,9 @@ FN StartupCheck
     cmp eax,0x10300
     jb .startup_fail
     call StrictLicenseCheck
+    test eax,eax
+    jz .startup_fail
+    call LoadEmbeddedHistory
     test eax,eax
     jz .startup_fail
     mov eax,1

@@ -1,11 +1,13 @@
-# Febius Fortuna 1.7.1 / Engine 1.5.1
+# Febius Fortuna 1.8.0 / Engine 1.5.1
 
-Windows 백신의 휴리스틱 오탐 가능성을 낮추기 위한 바이너리 정리 업데이트입니다.
+로또 6/45 과거 추첨 이력을 프로그램에 기본 탑재했습니다.
 
-- 비공식 `SystemFunction036/RtlGenRandom` 호출을 문서화된 Windows CSPRNG `BCryptGenRandom`으로 교체
-- 릴리스 EXE/DLL에 PE 체크섬 생성 및 기존 ASLR·High Entropy VA·NX 호환 플래그 검증 강화
-- Febius Account HTTP User-Agent를 현재 앱 버전으로 정리
-- CI에서 legacy RNG import 부재, BCRYPT import, PE 보안 플래그와 체크섬을 자동 검사
+- 1회차부터 1242회차까지 1,242개 이력을 EXE에 정적 포함
+- 실행 시 자동 로드하여 별도 CSV 없이 일반·심층 ORACLE 분석 가능
+- 기존 CSV 불러오기는 **외부 CSV** 기능으로 유지해 현재 세션 데이터를 교체 가능
+- 빌드 시 데이터 SHA-256, 회차 연속성, 본번호 범위·중복, 보너스 유효성을 전수 검사
+- self-test가 최종 실행 파일의 내장 데이터를 실제 ORACLE parser로 다시 검증
 
-ORACLE 분석 수식, 계정·라이선스 정책, 저장 데이터 형식은 변경하지 않았습니다.
-이 업데이트는 특정 백신의 탐지 해제를 보장하지 않으며 코드 서명을 추가한 버전은 아닙니다.
+현재 엔진이 사용하는 회차·본번호 6개·보너스만 내장합니다. 원본 Excel의 당첨금·당첨자 수 열은 현재 분석에 사용하지 않습니다.
+
+이번 내장 이력은 제공받은 Excel을 구조적으로 검증해 변환한 것이며, 별도의 공식 웹 자료와 전 회차를 독립 대조한 것은 아닙니다.

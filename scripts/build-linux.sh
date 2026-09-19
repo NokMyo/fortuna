@@ -4,6 +4,7 @@ set -eu
 : "${FORTUNA_MINGW_LIB:=/usr/x86_64-w64-mingw32/lib}"
 export FORTUNA_MINGW_INCLUDE FORTUNA_MINGW_LIB
 cd "$(dirname "$0")/.."
+python3 scripts/generate-embedded-history.py
 sh engine/scripts/build-linux.sh
 mkdir -p build
 x86_64-w64-mingw32-as src/fortuna.s -o build/fortuna.obj

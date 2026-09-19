@@ -1,6 +1,6 @@
 # 세 가지 추첨 방식
 
-앱 1.7.1 · Fortuna ORACLE Engine 1.5.1 · ABI 1.0
+앱 1.8.0 · Fortuna ORACLE Engine 1.5.1 · ABI 1.0
 
 일반·심층 모두 [열 가지 통합 수학 기능](../engine/docs/INTEGRATED_INFERENCE.md)을
 기본 실행합니다. 심층은 계수·검증·가상 이력 범위를 더 넓게 계산합니다.

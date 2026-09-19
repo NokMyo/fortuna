@@ -3,6 +3,7 @@ setlocal
 cd /d "%~dp0"
 if not exist engine\build.bat (echo Missing engine\build.bat; restore the engine folder from this repository & exit /b 1)
 if not exist build mkdir build
+python scripts\\generate-embedded-history.py || exit /b 1
 pushd engine
 call build.bat
 set "engine_build_status=%errorlevel%"

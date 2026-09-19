@@ -4,7 +4,7 @@ $dest = "dist/FebiusFortuna-$version-windows-x64"
 New-Item -ItemType Directory -Force "$dest/docs", "$dest/engine/docs", "$dest/engine/data" | Out-Null
 Copy-Item build/FebiusFortuna.exe $dest
 Copy-Item README.md,CHANGELOG.md $dest
-Copy-Item docs/USER_GUIDE.md,docs/ARCHITECTURE.md,docs/DRAW_MODES.md "$dest/docs"
+Copy-Item docs/USER_GUIDE.md,docs/ARCHITECTURE.md,docs/DRAW_MODES.md,docs/EMBEDDED_HISTORY.md "$dest/docs"
 Copy-Item engine/README.md,engine/VERSION "$dest/engine"
 Copy-Item engine/docs/RESEARCH.md,engine/docs/ENGINE_API.md,engine/docs/IMPLEMENTATION.md,engine/docs/ORACLE.md,engine/docs/ORACLE_FIELD_ARCHITECTURE.md "$dest/engine/docs"
 Copy-Item engine/docs/INTEGRATED_INFERENCE.md,engine/docs/ADVANCED_EVIDENCE_LAYER.md "$dest/engine/docs"

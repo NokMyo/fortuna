@@ -24,6 +24,16 @@ FN WinMainCRTStartup,32
     test eax,eax
     jnz 1f
     call SelfTest
+    test eax,eax
+    jnz .entry_selftest_exit
+    call LoadEmbeddedHistory
+    test eax,eax
+    jnz .entry_selftest_ok
+    mov eax,20
+    jmp .entry_selftest_exit
+.entry_selftest_ok:
+    xor eax,eax
+.entry_selftest_exit:
     mov ecx,eax
     call ExitProcess
 1:  mov rcx,[rbx+8]

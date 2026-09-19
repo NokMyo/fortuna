@@ -4,6 +4,7 @@
 .include "src/app_state.inc"
 .include "src/app_util.inc"
 .include "src/strings.inc"
+.include "src/embedded_history.inc"
 .include "src/windows.inc"
 .include "src/auth.inc"
 .include "src/engine_bridge.inc"

@@ -9,7 +9,7 @@ FONT 9, "Malgun Gothic", 400, 0, 1
 BEGIN
     LTEXT "FEBIUS  /  UTILITY SERIES", -1, 12, 9, 400, 12
     LTEXT "Fortuna", 1100, 12, 23, 260, 29
-    RTEXT "Powered by Fortuna ORACLE Engine\nAPP 1.7.1", -1, 398, 24, 180, 25
+    RTEXT "Powered by Fortuna ORACLE Engine\nAPP 1.8.0", -1, 398, 24, 180, 25
     CONTROL "", -1, "STATIC", SS_ETCHEDHORZ, 12, 58, 566, 1
     GROUPBOX "생성한 번호", -1, 12, 67, 354, 190
     LTEXT "--   --   --   --   --   --", 1101, 24, 84, 330, 37, SS_CENTER | SS_CENTERIMAGE
@@ -32,11 +32,11 @@ BEGIN
     CTEXT "일반 분석 · 검증 기준 적용",-1,206,307,174,12
     CTEXT "정밀 연구 분석 · 장시간 소요",-1,388,307,178,12
     GROUPBOX "회차 데이터", -1, 12, 331, 566, 57
-    LTEXT "CSV를 불러오면 오라클 분석을 사용할 수 있습니다.", 1105, 24, 345, 356, 27
-    PUSHBUTTON "CSV 불러오기", 1001, 478, 350, 88, 23
+    LTEXT "내장 추첨 데이터 1~1242회차가 기본으로 로드됩니다.", 1105, 24, 345, 356, 27
+    PUSHBUTTON "외부 CSV", 1001, 478, 350, 88, 23
     CONTROL "", 1106, "msctls_progress32", WS_BORDER, 12, 397, 472, 11
     PUSHBUTTON "분석 취소", 1004, 492, 394, 86, 18
-    LTEXT "준비되었습니다. 데이터 없이도 번호를 생성할 수 있습니다.", 1107, 12, 417, 566, 14
+    LTEXT "준비되었습니다. 1~1242회차 기본 데이터가 내장되어 있습니다.", 1107, 12, 417, 566, 14
     CONTROL "", -1, "STATIC", SS_ETCHEDHORZ, 12, 437, 566, 1
     LTEXT "오라클 지수는 내부 분석 지표입니다. 모든 조합의 실제 1등 확률은 1 / 8,145,060으로 같습니다.", -1, 12, 445, 566, 12
 END
@@ -44,7 +44,7 @@ END
 BEGIN
     POPUP "파일(&F)"
     BEGIN
-        MENUITEM "CSV 불러오기...", 1001
+        MENUITEM "외부 CSV 불러오기...", 1001
         MENUITEM "생성 번호 저장...", 1008
         MENUITEM "분석 보고서 내보내기...", 1011
         MENUITEM "기록 폴더 열기", 1012
@@ -85,13 +85,13 @@ CAPTION "Febius Fortuna 정보"
 FONT 9,"Malgun Gothic"
 BEGIN
     LTEXT "FEBIUS  /  UTILITY SERIES", -1,12,12,270,12
-    LTEXT "Febius Fortuna 1.7.1",-1,12,33,270,20
+    LTEXT "Febius Fortuna 1.8.0",-1,12,33,270,20
     LTEXT "분석적 무작위 번호 생성기\nWindows x64 · Assembly · CRT 비의존\n\nORACLE Field Architecture\n© 2026 nokmyo. All rights reserved.",-1,12,57,275,66
     DEFPUSHBUTTON "확인",IDOK,230,128,58,18
 END
 1 VERSIONINFO
-FILEVERSION 1,7,1,0
-PRODUCTVERSION 1,7,1,0
+FILEVERSION 1,8,0,0
+PRODUCTVERSION 1,8,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0
 FILEOS VOS_NT_WINDOWS32
@@ -103,12 +103,12 @@ BEGIN
   BEGIN
    VALUE "CompanyName", "Febius\0"
    VALUE "FileDescription", "Febius Fortuna\0"
-   VALUE "FileVersion", "1.7.1\0"
+   VALUE "FileVersion", "1.8.0\0"
    VALUE "InternalName", "FebiusFortuna\0"
    VALUE "LegalCopyright", "© 2026 nokmyo. All rights reserved.\0"
    VALUE "OriginalFilename", "FebiusFortuna.exe\0"
    VALUE "ProductName", "Febius Fortuna\0"
-   VALUE "ProductVersion", "1.7.1\0"
+   VALUE "ProductVersion", "1.8.0\0"
   END
  END
  BLOCK "VarFileInfo"
