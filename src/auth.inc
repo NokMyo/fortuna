@@ -769,7 +769,7 @@ FN AuthDialogProc,16
     xor r9d,r9d
     call SendMessageW
     mov rcx,rbx
-    lea rdx,[rip+auth_login_ready]
+    lea rdx,[rip+empty]
     call AuthSetDialogStatus
     mov eax,1
     jmp .adp_out
