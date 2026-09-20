@@ -1,6 +1,6 @@
 #pragma code_page(65001)
 #include <windows.h>
-101 DIALOGEX 0, 0, 590, 530
+101 DIALOGEX 0, 0, 590, 490
 STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Febius Fortuna"
@@ -31,20 +31,20 @@ BEGIN
     CTEXT "균등 무작위",-1,24,307,174,12
     CTEXT "일반 분석 • 성능 측정 중",1130,206,307,174,12
     CTEXT "정밀 분석 • 성능 측정 중",1131,388,307,178,12
-    GROUPBOX "백테스트 범위", -1, 12, 331, 566, 54
-    LTEXT "시작 회차",-1,24,350,50,14
-    EDITTEXT 1132,78,346,64,20,ES_NUMBER | ES_AUTOHSCROLL
-    LTEXT "종료 회차",-1,158,350,50,14
-    EDITTEXT 1133,212,346,64,20,ES_NUMBER | ES_AUTOHSCROLL
-    LTEXT "평가 대상 회차 · 각 회차 직전 데이터만 학습 · 선택 범위 최소 60회",-1,292,347,274,25
-    GROUPBOX "회차 데이터", -1, 12, 391, 566, 57
-    LTEXT "내장 추첨 데이터 1~1242회차가 기본으로 로드됩니다.", 1105, 24, 405, 356, 27
-    PUSHBUTTON "외부 CSV", 1001, 478, 410, 88, 23
-    CONTROL "", 1106, "msctls_progress32", WS_BORDER, 12, 457, 472, 11
-    PUSHBUTTON "분석 취소", 1004, 492, 454, 86, 18
-    LTEXT "준비되었습니다. 1~1242회차 기본 데이터가 내장되어 있습니다.", 1107, 12, 477, 566, 14
-    CONTROL "", -1, "STATIC", SS_ETCHEDHORZ, 12, 497, 566, 1
-    LTEXT "오라클 지수는 내부 분석 지표입니다. 모든 조합의 실제 1등 확률은 1 / 8,145,060으로 같습니다.", -1, 12, 505, 566, 12
+    GROUPBOX "백테스트 범위", -1, 12, 331, 566, 39
+    LTEXT "시작 회차",-1,24,344,50,14
+    EDITTEXT 1132,78,340,64,18,ES_NUMBER | ES_AUTOHSCROLL
+    LTEXT "종료 회차",-1,158,344,50,14
+    EDITTEXT 1133,212,340,64,18,ES_NUMBER | ES_AUTOHSCROLL
+    LTEXT "평가 대상 회차 · 직전 데이터만 학습 · 범위 최소 60회",-1,292,341,274,20
+    GROUPBOX "회차 데이터", -1, 12, 374, 566, 45
+    LTEXT "내장 추첨 데이터 1~1242회차가 기본으로 로드됩니다.", 1105, 24, 386, 356, 24
+    PUSHBUTTON "외부 CSV", 1001, 478, 385, 88, 22
+    CONTROL "", 1106, "msctls_progress32", WS_BORDER, 12, 426, 472, 11
+    PUSHBUTTON "분석 취소", 1004, 492, 423, 86, 18
+    LTEXT "준비되었습니다. 1~1242회차 기본 데이터가 내장되어 있습니다.", 1107, 12, 445, 566, 14
+    CONTROL "", -1, "STATIC", SS_ETCHEDHORZ, 12, 463, 566, 1
+    LTEXT "오라클 지수는 내부 분석 지표입니다. 모든 조합의 실제 1등 확률은 1 / 8,145,060으로 같습니다.", -1, 12, 471, 566, 12
 END
 200 MENU
 BEGIN
