@@ -1,6 +1,6 @@
 # Integrated ten-function inference 1.0
 
-App 1.9.0 / Engine 1.6.0 / public ABI 1.0.
+App 1.9.1 / Engine 1.6.0 / public ABI 1.0.
 
 The [depth extension](DEPTH_VALIDATION.md) adds multiscale/graph correction,
 compensated partition derivatives and causal/bootstrap gates to this base layer.
