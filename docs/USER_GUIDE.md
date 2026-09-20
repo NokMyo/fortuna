@@ -1,4 +1,4 @@
-# Febius Fortuna 1.9.0 사용 설명서
+# Febius Fortuna 1.9.1 사용 설명서
 
 엔진이 포함된 `FebiusFortuna.exe` 하나로 실행합니다. 별도 엔진 파일 설치는 필요하지 않습니다. 엔진의 소스와 SDK는 같은 저장소의 `engine/` 폴더에서 관리합니다.
 
