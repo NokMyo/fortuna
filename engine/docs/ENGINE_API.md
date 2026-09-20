@@ -17,7 +17,7 @@ The same API is also available in `FortunaOracleStatic.lib` for embedding in a s
 
 ## Distribution and versioning
 
-- Application: **Febius Fortuna 1.9.0** (`FebiusFortuna.exe`).
+- Application: **Febius Fortuna 1.9.1** (`FebiusFortuna.exe`).
 - Engine: **Fortuna ORACLE Engine 1.6.0** (`FortunaOracle.dll`).
 - Binary interface: **ABI 1.0**, `0x00010000`.
 
