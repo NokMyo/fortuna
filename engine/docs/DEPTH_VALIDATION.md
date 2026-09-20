@@ -1,4 +1,4 @@
-# Depth validation 1.0 — app 1.8.0 / engine 1.5.1
+# Depth validation 1.0 — app 1.9.0 / engine 1.6.0
 
 This layer extends the existing ten-function pipeline in **both** product ORACLE
 modes. `src/depth.inc` and `src/depth_api.inc` are x64 assembly. Python is used
@@ -142,6 +142,12 @@ renormalizes the remainder, and measures the absolute log-probability change on
 the last untouched outer draw. The report gives the maximum change. Loss CUSUM
 uses c[t]=max(0,c[t-1]-gain[t]) and reports max c. These are sensitivity/drift
 diagnostics with no calibrated rejection threshold.
+
+## Configurable causal backtest window
+
+Engine 1.6 adds an inclusive target-round window. The window changes which historical outcomes are used as walk-forward evaluation targets; it does not change the final fit, which still uses the complete loaded history. Each target is predicted from rows strictly before that target. A custom window requires at least 60 training rows before its first target and at least 60 targets total. The last 30 selected targets are reserved for independent confirmation, leaving at least 30 learning folds. Integrated chronological folds and deep nested validation are also anchored inside the selected target window.
+
+Changing the range invalidates completed normal/deep analysis state. The same dataset and same range may reuse a completed result. The GUI time estimate is a hardware-calibrated scheduling hint, not a statistical quantity and not a completion guarantee.
 
 ## Normal-mode gate and cost
 

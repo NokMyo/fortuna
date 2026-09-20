@@ -208,6 +208,17 @@ FN SetBusyControls
     inc esi
     cmp esi,1122
     jbe 3b
+    mov esi,ID_BACKTEST_START
+4:  mov rcx,[rip+h_main]
+    mov edx,esi
+    call GetDlgItem
+    mov rcx,rax
+    mov edx,1
+    sub edx,ebp
+    call EnableWindow
+    inc esi
+    cmp esi,ID_BACKTEST_END
+    jbe 4b
     END
 
 FN DialogProc,128
@@ -266,6 +277,12 @@ FN DialogProc,128
     je .dp_init_smoke
     call UpdateDataUI
 .dp_init_smoke:
+    cmp dword ptr [rip+smoke_mode],1
+    je .dp_smoke_run
+    call BenchmarkPerformance
+    call UpdateEstimatedTimes
+    jmp .dp_true
+.dp_smoke_run:
     cmp dword ptr [rip+smoke_mode],1
     jne .dp_true
     mov ecx,5
@@ -375,6 +392,9 @@ FN DialogProc,128
 .dp_analyze_start:
     cmp dword ptr [rip+history_count],60
     jb .dp_need
+    call ApplyBacktestRangeFromUI
+    test eax,eax
+    jz .dp_backtest_invalid
     mov eax,[rip+app_research_mode]
     inc eax
     cmp eax,[rip+app_model_kind]
@@ -414,6 +434,10 @@ FN DialogProc,128
     jmp .dp_true
 .dp_need:
     lea rcx,[rip+text_need]
+    call Alert
+    jmp .dp_true
+.dp_backtest_invalid:
+    lea rcx,[rip+text_backtest_invalid]
     call Alert
     jmp .dp_true
 .dp_count:
@@ -596,7 +620,7 @@ FN DialogProc,128
     cmp dword ptr [rip+smoke_ticks],20
     jae .dp_close
 1:  cmp dword ptr [rip+analysis_busy],1
-    jne .dp_true
+    jne .dp_timer_idle
     call ReadEngineProgress
     mov eax,[rip+validation_count]
     mov [rsp+32],rax
@@ -618,6 +642,9 @@ FN DialogProc,128
     mov r8d,[rip+progress]
     xor r9d,r9d
     call SendMessageW
+    jmp .dp_true
+.dp_timer_idle:
+    call UpdateEstimatedTimes
     jmp .dp_true
 .dp_done:
     mov rcx,[rip+h_worker]
@@ -743,6 +770,23 @@ FN UpdateDataUI,16
     mov edx,1105
     lea r8,[rip+ui_status]
     call SetDlgItemTextW
+    # Default visible backtest window spans every eligible target through the
+    # latest loaded round. The engine still reserves its final 30 as confirmation.
+    mov eax,[rip+last_round]
+    sub eax,[rip+history_count]
+    add eax,61
+    mov r8d,eax
+    mov rcx,[rip+h_main]
+    mov edx,ID_BACKTEST_START
+    xor r9d,r9d
+    call SetDlgItemInt
+    mov r8d,[rip+last_round]
+    mov rcx,[rip+h_main]
+    mov edx,ID_BACKTEST_END
+    xor r9d,r9d
+    call SetDlgItemInt
+    mov dword ptr [rip+estimate_ready],0
+    call UpdateEstimatedTimes
     END 16
 
 FN UpdateDrawProgress

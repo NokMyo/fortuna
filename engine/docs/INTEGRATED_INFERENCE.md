@@ -1,12 +1,12 @@
 # Integrated ten-function inference 1.0
 
-App 1.8.0 / Engine 1.5.1 / public ABI 1.0.
+App 1.9.0 / Engine 1.6.0 / public ABI 1.0.
 
 The [depth extension](DEPTH_VALIDATION.md) adds multiscale/graph correction,
 compensated partition derivatives and causal/bootstrap gates to this base layer.
 
 Both product ORACLE buttons execute this layer by default after the existing
-normal/research analysis and Advanced Evidence Layer. The random button remains
+normal/research analysis and Advanced Evidence Layer. Its chronological folds are drawn from the user-selected causal backtest target window; the last applicable rows in that window are used without reading their future outcomes. The random button remains
 an independent uniform generator. Runtime implementation: `src/integrated.inc`
 and `src/integrated_api.inc`, entirely x64 assembly. The account/license entry
 points are unchanged. No external Python or engine DLL is required by the app.

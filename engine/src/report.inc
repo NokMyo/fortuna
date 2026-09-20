@@ -3,6 +3,7 @@ r_header: .asciz "\357\273\277Fortuna ORACLE Engine 1.1.0 / reference report\r\n
 r_config: .asciz "\r\nConfig SHA-256: "
 r_field: .asciz "\r\nCandidate-field SHA-256: "
 r_count: .asciz "\r\nDraws / latest / target: "
+r_backtest: .asciz "\r\nBacktest targets / selected targets / confirmation folds: "
 r_slash: .asciz " / "
 r_newline: .asciz "\r\n"
 r_comma: .asciz ","
@@ -172,6 +173,30 @@ FN BuildReport
     call Text
     mov ecx,[rip+last_round]
     inc ecx
+    call Number
+    lea rcx,[rip+r_backtest]
+    call Text
+    mov eax,[rip+backtest_start_index]
+    imul eax,eax,RECORD_SIZE
+    lea rdx,[rip+history]
+    mov ecx,[rdx+rax]
+    call Number
+    lea rcx,[rip+r_slash]
+    call Text
+    mov eax,[rip+backtest_end_index]
+    dec eax
+    imul eax,eax,RECORD_SIZE
+    lea rdx,[rip+history]
+    mov ecx,[rdx+rax]
+    call Number
+    lea rcx,[rip+r_slash]
+    call Text
+    mov ecx,[rip+backtest_end_index]
+    sub ecx,[rip+backtest_start_index]
+    call Number
+    lea rcx,[rip+r_slash]
+    call Text
+    mov ecx,[rip+confirmation_count]
     call Number
     lea rcx,[rip+r_validation]
     call Text

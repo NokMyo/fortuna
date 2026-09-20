@@ -27,6 +27,19 @@ for raw in [b'1,1,1,3,4,5,6\n',b'1,0,2,3,4,5,6',b'1,1,2,3,4,5,46',
 rev=b'round,n1,n2,n3,n4,n5,n6\r\n'+b''.join((str(i+1)+','+','.join(map(str,reversed(rows[i])))+'\r\n').encode() for i in range(119,-1,-1))
 assert parse(rev,len(rev))==1
 assert bytes(array(lib,'hash_dataset',32,C.c_ubyte))==hash_before
+# Custom target-round windows resolve to prefix-only indices and reserve the
+# final 30 selected targets for independent confirmation.
+scalar(lib,'backtest_start_round').value=61
+scalar(lib,'backtest_end_round').value=120
+assert fn(lib,'ResolveBacktestRange')()==1
+assert scalar(lib,'backtest_start_index').value==60
+assert scalar(lib,'backtest_end_index').value==120
+assert scalar(lib,'validation_stop').value==90
+scalar(lib,'backtest_end_round').value=119
+assert fn(lib,'ResolveBacktestRange')()==0
+scalar(lib,'backtest_start_round').value=0
+scalar(lib,'backtest_end_round').value=0
+assert fn(lib,'ResolveBacktestRange')()==1
 rebuild(60)
 assert sum(array(lib,'freq_total',45,C.c_uint32))==360
 assert sum(array(lib,'triple_counts',14190,C.c_uint32))==1200
@@ -101,7 +114,7 @@ masks=list(array(lib,'session_masks',10,C.c_uint64))
 assert len(set(masks))==10 and all(m.bit_count()==6 and m>>45==0 for m in masks)
 size=fn(lib,'BuildReport')();assert 0<size<2097152
 report=bytes(array(lib,'report_buffer',size,C.c_ubyte)).decode('utf-8-sig')
-assert 'Candidate-field SHA-256' in report and 'Independent policy confirmation' in report
+assert 'Candidate-field SHA-256' in report and 'Independent policy confirmation' in report and 'Backtest targets' in report
 scalar(lib,'cancel_flag').value=1
 assert fn(lib,'AnalyzeOracle')()==0
 assert scalar(lib,'field_ready').value==0 and scalar(lib,'rho',C.c_double).value==1

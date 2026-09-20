@@ -23,6 +23,18 @@ elapsed_ms: .skip 8
 api_snapshot: .skip 272
 api_progress: .skip 16
 report_buffer: .skip 2097152
+# UI-only performance calibration and dynamic time estimates.
+benchmark_ms: .skip 4
+benchmark_ready: .skip 4
+benchmark_sink: .skip 8
+estimate_ready: .skip 4
+estimate_last_start: .skip 4
+estimate_last_end: .skip 4
+estimate_normal_minutes: .skip 4
+estimate_deep_minutes: .skip 4
+ui_int_ok: .skip 4
+ui_est_normal: .skip 128
+ui_est_deep: .skip 128
 
 .section .bss
 app_research_mode: .skip 4

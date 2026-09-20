@@ -126,6 +126,15 @@ FN LoadCsvFile
 .load_auth_fail:
     xor eax,eax
 .load_out: END
+FN ConfigureBacktestRange
+    call FortunaOracleSetBacktestRange
+    mov ebx,eax
+    call RefreshEngineState
+    xor eax,eax
+    test ebx,ebx
+    sete al
+    END
+
 FN AnalyzeOracle
     mov ecx,[rip+app_research_mode]
     test ecx,ecx

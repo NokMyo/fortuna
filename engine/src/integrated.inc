@@ -796,8 +796,10 @@ ti_space_double: .skip 8
 # Last chronological fold is untouched by weight fitting (outer confirmation).
 # On n=60 all ten computations still run, but there is no out-of-sample evidence.
 FN TiValidate
-    mov eax,[rip+ti_real_n]
-    sub eax,60
+    # Use the most recent configured backtest targets, not necessarily the
+    # physical end of the loaded dataset. AnalyzeOracle resolves these indices.
+    mov eax,[rip+backtest_end_index]
+    sub eax,[rip+backtest_start_index]
     cmp eax,[rip+ti_fold_limit]
     jbe 1f
     mov eax,[rip+ti_fold_limit]
@@ -807,7 +809,7 @@ FN TiValidate
 .tiv_fold:
     cmp esi,[rip+ti_folds]
     jae .tiv_stack
-    mov ecx,[rip+ti_real_n]
+    mov ecx,[rip+backtest_end_index]
     sub ecx,[rip+ti_folds]
     add ecx,esi
     mov ebp,ecx

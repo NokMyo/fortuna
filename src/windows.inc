@@ -13,6 +13,10 @@
 .equ ID_EXIT,1013
 .equ ID_UNIFORM,1014
 .equ ID_MANUAL,1015
+.equ ID_EST_NORMAL,1130
+.equ ID_EST_DEEP,1131
+.equ ID_BACKTEST_START,1132
+.equ ID_BACKTEST_END,1133
 .equ ID_RELEASES,1016
 .equ ID_ABOUT,1017
 .section .bss
@@ -177,6 +181,185 @@ FN InitStorage
     lea rdx,[rip+forecast_filename]
     call lstrcatW
 .is_out: END
+
+# Short deterministic CPU calibration. It performs a fixed amount of integer
+# work and never inspects lottery outcomes or mutates ORACLE state.
+FN BenchmarkPerformance
+    call GetTickCount64
+    mov r12,rax
+    mov rax,0x9e3779b97f4a7c15
+    mov rdx,0xbf58476d1ce4e5b9
+    mov r8,0x94d049bb133111eb
+    mov r9,0xda942042e4dd58b5
+    mov r13d,8
+.bp_outer:
+    mov ecx,8145060
+.bp_loop:
+    imul rax,rdx
+    xor rax,r8
+    rol rax,17
+    add r8,rax
+    imul r8,r9
+    xor rdx,r8
+    ror rdx,11
+    dec ecx
+    jnz .bp_loop
+    dec r13d
+    jnz .bp_outer
+    xor rax,rdx
+    mov [rip+benchmark_sink],rax
+    call GetTickCount64
+    sub rax,r12
+    test rax,rax
+    jnz 1f
+    mov eax,1
+1:  cmp rax,10000
+    jbe 2f
+    mov eax,10000
+2:  mov [rip+benchmark_ms],eax
+    mov dword ptr [rip+benchmark_ready],1
+    mov dword ptr [rip+estimate_ready],0
+    END
+
+# Recalculate displayed estimates when the visible backtest range changes.
+# Values are calibrated estimates, not completion deadlines.
+FN UpdateEstimatedTimes,32
+    cmp dword ptr [rip+benchmark_ready],1
+    jne .uet_out
+    mov dword ptr [rip+ui_int_ok],0
+    mov rcx,[rip+h_main]
+    mov edx,ID_BACKTEST_START
+    lea r8,[rip+ui_int_ok]
+    xor r9d,r9d
+    call GetDlgItemInt
+    mov ebx,eax
+    cmp dword ptr [rip+ui_int_ok],0
+    je .uet_invalid
+    mov dword ptr [rip+ui_int_ok],0
+    mov rcx,[rip+h_main]
+    mov edx,ID_BACKTEST_END
+    lea r8,[rip+ui_int_ok]
+    xor r9d,r9d
+    call GetDlgItemInt
+    mov ebp,eax
+    cmp dword ptr [rip+ui_int_ok],0
+    je .uet_invalid
+    cmp ebp,ebx
+    jb .uet_invalid
+    mov eax,ebp
+    sub eax,ebx
+    inc eax
+    cmp eax,60
+    jb .uet_invalid
+    mov r12d,eax
+    cmp ebx,[rip+estimate_last_start]
+    jne .uet_compute
+    cmp ebp,[rip+estimate_last_end]
+    jne .uet_compute
+    cmp dword ptr [rip+estimate_ready],1
+    je .uet_out
+.uet_compute:
+    mov [rip+estimate_last_start],ebx
+    mov [rip+estimate_last_end],ebp
+    # normal_ms ~= measured kernel * target count * 5 + fixed setup.
+    mov eax,[rip+benchmark_ms]
+    mov r13,rax
+    mov rax,r13
+    imul rax,r12
+    imul rax,5
+    mov r14,r13
+    imul r14,200
+    add rax,r14
+    mov r15,rax
+    add rax,59999
+    xor edx,edx
+    mov ecx,60000
+    div rcx
+    test eax,eax
+    jnz 1f
+    mov eax,1
+1:  cmp eax,9999
+    jbe 2f
+    mov eax,9999
+2:  mov [rip+estimate_normal_minutes],eax
+    # Deep mode repeats the complete base pipeline over 13 ablations, then
+    # performs nested validation and uncertainty work.
+    mov rax,r15
+    imul rax,13
+    mov r14,r13
+    imul r14,2000
+    add rax,r14
+    add rax,59999
+    xor edx,edx
+    mov ecx,60000
+    div rcx
+    test eax,eax
+    jnz 3f
+    mov eax,1
+3:  cmp eax,9999
+    jbe 4f
+    mov eax,9999
+4:  mov [rip+estimate_deep_minutes],eax
+    lea rcx,[rip+ui_est_normal]
+    lea rdx,[rip+fmt_est_normal]
+    mov r8d,[rip+estimate_normal_minutes]
+    call wsprintfW
+    mov rcx,[rip+h_main]
+    mov edx,ID_EST_NORMAL
+    lea r8,[rip+ui_est_normal]
+    call SetDlgItemTextW
+    lea rcx,[rip+ui_est_deep]
+    lea rdx,[rip+fmt_est_deep]
+    mov r8d,[rip+estimate_deep_minutes]
+    call wsprintfW
+    mov rcx,[rip+h_main]
+    mov edx,ID_EST_DEEP
+    lea r8,[rip+ui_est_deep]
+    call SetDlgItemTextW
+    mov dword ptr [rip+estimate_ready],1
+    jmp .uet_out
+.uet_invalid:
+    mov dword ptr [rip+estimate_ready],0
+    mov rcx,[rip+h_main]
+    mov edx,ID_EST_NORMAL
+    lea r8,[rip+text_est_invalid_normal]
+    call SetDlgItemTextW
+    mov rcx,[rip+h_main]
+    mov edx,ID_EST_DEEP
+    lea r8,[rip+text_est_invalid_deep]
+    call SetDlgItemTextW
+.uet_out: END 32
+
+# Apply visible target-round range to the engine. Returns 1 on success.
+FN ApplyBacktestRangeFromUI
+    mov dword ptr [rip+ui_int_ok],0
+    mov rcx,[rip+h_main]
+    mov edx,ID_BACKTEST_START
+    lea r8,[rip+ui_int_ok]
+    xor r9d,r9d
+    call GetDlgItemInt
+    mov ebx,eax
+    cmp dword ptr [rip+ui_int_ok],0
+    je .abr_fail
+    mov dword ptr [rip+ui_int_ok],0
+    mov rcx,[rip+h_main]
+    mov edx,ID_BACKTEST_END
+    lea r8,[rip+ui_int_ok]
+    xor r9d,r9d
+    call GetDlgItemInt
+    mov ebp,eax
+    cmp dword ptr [rip+ui_int_ok],0
+    je .abr_fail
+    mov ecx,ebx
+    mov edx,ebp
+    call ConfigureBacktestRange
+    test eax,eax
+    jz .abr_fail
+    mov eax,1
+    jmp .abr_out
+.abr_fail:
+    xor eax,eax
+.abr_out: END
 
 FN Notify
     mov r8,rcx

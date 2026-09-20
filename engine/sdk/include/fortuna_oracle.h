@@ -49,6 +49,10 @@ FO_API uint32_t FortunaOracleGetEngineVersion(void);
 /* Additive AEL capability version. 0x00010300 = Advanced Evidence Layer 1.3. */
 FO_API uint32_t FortunaOracleGetAdvancedVersion(void);
 FO_API int32_t FortunaOracleInitialize(void);
+/* Select inclusive historical target rounds for causal walk-forward backtesting.
+   Each target uses only earlier rows. Custom ranges require >=60 targets and
+   >=60 training rows before the first target. Pass 0,0 to restore automatic. */
+FO_API int32_t FortunaOracleSetBacktestRange(uint32_t first_target_round, uint32_t last_target_round);
 FO_API int32_t FortunaOracleLoadCsv(const void *utf8, uint64_t bytes);
 FO_API int32_t FortunaOracleLoadCsvFileW(const wchar_t *path);
 /* Legacy ABI-v1 analysis entry point retained for compatibility. */

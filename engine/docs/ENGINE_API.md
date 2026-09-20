@@ -1,4 +1,4 @@
-# Fortuna ORACLE Engine 1.5.1 — Windows x64 SDK
+# Fortuna ORACLE Engine 1.6.0 — Windows x64 SDK
 
 `FortunaOracleGetDepthSnapshot(out,bytes)` exposes 96-byte diagnostics after
 completed integrated analysis. See [layout, errors and equations](DEPTH_VALIDATION.md).
@@ -17,8 +17,8 @@ The same API is also available in `FortunaOracleStatic.lib` for embedding in a s
 
 ## Distribution and versioning
 
-- Application: **Febius Fortuna 1.8.0** (`FebiusFortuna.exe`).
-- Engine: **Fortuna ORACLE Engine 1.5.1** (`FortunaOracle.dll`).
+- Application: **Febius Fortuna 1.9.0** (`FebiusFortuna.exe`).
+- Engine: **Fortuna ORACLE Engine 1.6.0** (`FortunaOracle.dll`).
 - Binary interface: **ABI 1.0**, `0x00010000`.
 
 The application embeds the static engine in its EXE; its ZIP requires no engine DLL. Engine source, documentation, tests and SDK live under `engine/` in the same Fortuna repository. Run `engine/build.bat sdk` to build a developer DLL, import library and standalone assembly client.
@@ -39,6 +39,7 @@ Initialize before normal operations. Initialization is idempotent and performs l
 |---|---|
 | `GetAbiVersion()` / `GetEngineVersion()` | Return the respective packed version without initialization. All names have the `FortunaOracle` prefix. |
 | `Initialize()` | Return 0 on success. Required before stateful operations. |
+| `SetBacktestRange(first,last)` | Set an inclusive target-round window for causal walk-forward validation. Every target uses only prior rows. Custom ranges require at least 60 prior training rows and at least 60 selected target rounds; the final 30 selected targets are independent confirmation. `0,0` restores the automatic full window. Changing the range invalidates analysis caches but not the loaded history. |
 | `LoadCsv(utf8, uint64 bytes)` | Transactional import from caller memory, at most 16 MiB. No trailing NUL required. |
 | `LoadCsvFileW(path)` | Transactional import through a NUL-terminated UTF-16 filename. |
 | `Analyze()` | Synchronous analysis using the loaded history. At least 60 rows. Resets cancellation on entry; requests apply to the active analysis. |

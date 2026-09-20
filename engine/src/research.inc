@@ -253,27 +253,32 @@ FN JointNestedValidation,32
     mov qword ptr [rip+research_max_log_e],0
     mov qword ptr [rip+research_joint_loss],0
     mov qword ptr [rip+research_uniform_loss],0
-    mov ebp,[rip+history_count]
+    mov ebp,[rip+backtest_end_index]
     sub ebp,[rip+research_outer_limit]
+    cmp ebp,[rip+backtest_start_index]
+    jae .jnv_min_train
+    mov ebp,[rip+backtest_start_index]
+.jnv_min_train:
     cmp ebp,64
     jge .jnv_loop
     mov ebp,64
 .jnv_loop:
-    mov eax,[rip+history_count]
-    sub eax,64
-    cmp eax,[rip+research_outer_limit]
-    jle 1f
-    mov eax,[rip+research_outer_limit]
-1:  test eax,eax
+    mov eax,[rip+backtest_end_index]
+    sub eax,ebp
+    test eax,eax
     jns 2f
     xor eax,eax
-2:  lea ecx,[rax+1]
+2:  mov ecx,eax
+    test ecx,ecx
+    jnz 3f
+    mov ecx,1
+3:
     mov eax,[rip+research_outer_count]
     imul eax,eax,100
     xor edx,edx
     div ecx
     mov [rip+progress],eax
-    cmp ebp,[rip+history_count]
+    cmp ebp,[rip+backtest_end_index]
     jae .jnv_final
     mov dword ptr [rip+analysis_stage],9
     mov ecx,ebp
@@ -637,7 +642,7 @@ FN AnalyzeResearch
 rr_none: .asciz "\r\nRESEARCH SUITE: not run for this dataset. Use AnalyzeResearch / --research.\r\n"
 rr_head: .asciz "\r\nORACLE RESEARCH 1.1 / exact joint model + complete component ablation\r\nJoint model is a research forecast, not an established winning probability.\r\nGaussian working posterior + empirical-Bayes level shrinkage + family threshold.\r\nExact support, log Z, shrink setting, marginal sum error, level weights\r\n"
 rr_ablations: .asciz "\r\nFULL PIPELINE ABLATION (excluded -1 = all; 0..11 = omitted component)\r\nEvery row reruns chronological fitting, selection, weights, sampling, and confirmation.\r\nLog loss uses at least 50% uniform support; values are sums, not means.\r\nexcluded,learning_folds,mean_hits,brier,learning_log_loss,confirmation_log_loss,rho,confirmation_status,confirmation_folds\r\n"
-rr_nested: .asciz "\r\nNESTED JOINT FORECASTS / most recent at most 30 origins, each >=64\r\nInner four past outcomes select shrink 0.5/1/2; refit precedes outer outcome.\r\nRetrospective log-e is diagnostic: repeated development is not prospective evidence.\r\ntraining_rows,chosen_setting_index,log_loss,uniform_log_loss,cumulative_log_e,brier\r\n"
+rr_nested: .asciz "\r\nNESTED JOINT FORECASTS / latest at most 30 origins inside selected backtest targets, each >=64\r\nInner four past outcomes select shrink 0.5/1/2; refit precedes outer outcome.\r\nRetrospective log-e is diagnostic: repeated development is not prospective evidence.\r\ntraining_rows,chosen_setting_index,log_loss,uniform_log_loss,cumulative_log_e,brier\r\n"
 rr_uncertainty: .asciz "\r\nUNCERTAINTY / random training-window, shrink and interaction-order perturbations\r\nConditional on the chosen finite perturbation family, not total real-world uncertainty.\r\nworlds,estimated_max_marginal_MC_SE,combined_perturbation_variance,model_family_disagreement,intrinsic_bernoulli_variance,precision_target_met\r\n"
 rr_search: .asciz "\r\nSEARCH AUDIT / rejected uniform masks, bounded at 65536 attempts per pass\r\nTested masks,misses_before_expansion,misses_after_expansion,fast_capacity\r\nCounts are sample diagnostics, not a guarantee of zero global omissions.\r\n"
 rr_forecast: .asciz "\r\nLOCAL PROSPECTIVE FORECAST LEDGER\r\nvalid,evaluated,pending,log_e,max_log_e\r\nOnly trust values when valid=1. Each full distribution is frozen before its local-clock deadline.\r\nUnder independent uniform draws, previsible normalized forecasts give an e-process.\r\nlog(20) is the one-stream 5% crossing boundary; no adjustment for multiple chosen ledgers.\r\nLocal hashes and clocks are NOT third-party timestamp proof. Preserve a trusted external copy.\r\n"

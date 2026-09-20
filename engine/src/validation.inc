@@ -26,6 +26,60 @@ confirmation_end:
 .equ CONFIRMATION_BYTES,confirmation_end-confirmation_begin
 confirmation_null: .skip NULL_COUNT*8
 .section .text
+# Resolve the configured inclusive target-round window to zero-based history
+# indices. Automatic mode preserves the legacy policy: every target after the
+# first 60 training rows, with the last 30 reserved for confirmation only when
+# at least 120 rows exist. A custom window always contains at least 60 targets,
+# so 30 learning folds and 30 independent confirmation folds remain available.
+FN ResolveBacktestRange
+    mov eax,[rip+history_count]
+    cmp eax,60
+    jb .rbr_fail
+    mov dword ptr [rip+backtest_start_index],60
+    mov [rip+backtest_end_index],eax
+    mov dword ptr [rip+validation_stop],eax
+    cmp dword ptr [rip+backtest_start_round],0
+    jne .rbr_custom
+    cmp dword ptr [rip+backtest_end_round],0
+    jne .rbr_fail
+    cmp eax,120
+    jb .rbr_ok
+    sub eax,30
+    mov [rip+validation_stop],eax
+    jmp .rbr_ok
+.rbr_custom:
+    cmp dword ptr [rip+backtest_end_round],0
+    je .rbr_fail
+    mov r8d,[rip+history]
+    mov eax,[rip+backtest_start_round]
+    sub eax,r8d
+    jc .rbr_fail
+    cmp eax,60
+    jb .rbr_fail
+    mov ebx,eax
+    mov eax,[rip+backtest_end_round]
+    sub eax,r8d
+    jc .rbr_fail
+    inc eax
+    cmp eax,[rip+history_count]
+    ja .rbr_fail
+    cmp eax,ebx
+    jbe .rbr_fail
+    mov ecx,eax
+    sub ecx,ebx
+    cmp ecx,60
+    jb .rbr_fail
+    mov [rip+backtest_start_index],ebx
+    mov [rip+backtest_end_index],eax
+    sub eax,30
+    mov [rip+validation_stop],eax
+.rbr_ok:
+    mov eax,1
+    jmp .rbr_out
+.rbr_fail:
+    xor eax,eax
+.rbr_out: END
+
 # BH adjusted q-values: stable index sort, reverse cumulative minimum.
 FN BHCorrection
     mov rbx,rcx
@@ -76,14 +130,12 @@ FN ValidateHistory,32
     mov qword ptr [rip+research_validation_logsum],0
     mov qword ptr [rip+research_confirmation_logsum],0
     mov dword ptr [rip+validation_complete],0
+    call ResolveBacktestRange
+    test eax,eax
+    jz .vh_cancel
     lea rcx,[rip+confirmation_begin]
     mov edx,offset CONFIRMATION_BYTES
     call Zero
-    mov eax,[rip+history_count]
-    cmp eax,120
-    jb 1f
-    sub eax,30
-1:  mov [rip+validation_stop],eax
     lea rcx,[rip+validation_begin]
     mov edx,offset VALIDATION_BYTES
     call Zero
@@ -99,7 +151,8 @@ FN ValidateHistory,32
     mov dword ptr [rip+rng_mode],1
     mov qword ptr [rip+rng_state],73518492
     mov dword ptr [rip+rng_error],0
-    mov dword ptr [rip+validation_cutoff],60
+    mov eax,[rip+backtest_start_index]
+    mov [rip+validation_cutoff],eax
 .vh_fold:
     mov ebp,[rip+validation_cutoff]
     cmp ebp,[rip+validation_stop]
@@ -507,7 +560,7 @@ FN ConfirmPolicy,32
     mov ebp,[rip+validation_stop]
     mov qword ptr [rip+rng_state],420260913
 .cp_fold:
-    cmp ebp,[rip+history_count]
+    cmp ebp,[rip+backtest_end_index]
     jae .cp_gate
     cmp dword ptr [rip+cancel_flag],0
     jne .cp_cancel

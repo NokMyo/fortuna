@@ -313,6 +313,12 @@ FN ParseCsv,96
     imul eax,eax,RECORD_SIZE
     mov ecx,[rbx+rax]
     mov [rip+last_round],ecx
+    # A new dataset always returns to its automatic backtest window.
+    mov dword ptr [rip+backtest_start_round],0
+    mov dword ptr [rip+backtest_end_round],0
+    mov dword ptr [rip+backtest_start_index],60
+    mov eax,[rip+history_count]
+    mov [rip+backtest_end_index],eax
     mov dword ptr [rip+model_ready],0
     mov dword ptr [rip+research_ready],0
     mov dword ptr [rip+ti_ready],0

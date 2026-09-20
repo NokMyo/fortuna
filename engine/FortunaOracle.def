@@ -8,6 +8,7 @@ FortunaOracleGetDepthSnapshot
     FortunaOracleGetEngineVersion
     FortunaOracleGetAdvancedVersion
     FortunaOracleInitialize
+    FortunaOracleSetBacktestRange
     FortunaOracleLoadCsv
     FortunaOracleLoadCsvFileW
     FortunaOracleAnalyze

@@ -5,13 +5,13 @@ root=pathlib.Path(__file__).resolve().parents[1]
 dll=C.WinDLL(str(root/'build/FortunaOracle.dll'))
 def api(name,args=(),result=C.c_int32):
  f=getattr(dll,'FortunaOracle'+name);f.argtypes=list(args);f.restype=result;return f
-init=api('Initialize');load=api('LoadCsv',(C.c_void_p,C.c_uint64))
+init=api('Initialize');load=api('LoadCsv',(C.c_void_p,C.c_uint64));set_range=api('SetBacktestRange',(C.c_uint32,C.c_uint32))
 analyze=api('Analyze');cancel=api('Cancel')
 generate=api('Generate',(C.c_uint32,C.c_void_p,C.c_uint32))
 snapshot=api('GetSnapshot',(C.c_void_p,C.c_uint32));report=api('GetReport',(C.c_void_p,C.c_uint32))
 progress=api('GetProgress',(C.c_void_p,C.c_uint32))
 assert api('GetAbiVersion')()==0x10000
-assert api('GetEngineVersion')()==0x10501
+assert api('GetEngineVersion')()==0x10600
 out=(C.c_uint64*10)()
 assert generate(1,out,10)==-4
 assert init()==0 and init()==0
@@ -40,6 +40,9 @@ assert b'Candidate-field SHA-256' in buf.raw
 rng=random.Random(77)
 raw=('round,n1,n2,n3,n4,n5,n6\n'+''.join(str(i)+','+','.join(map(str,sorted(rng.sample(range(1,46),6))))+'\n' for i in range(1,121))).encode()
 assert load(raw,len(raw))==0
+assert set_range(61,119)==-1
+assert set_range(61,120)==0
+assert set_range(0,0)==0
 result=[];thread=threading.Thread(target=lambda:result.append(analyze()));thread.start()
 state=(C.c_uint32*4)();busy=False
 for _ in range(1000):
