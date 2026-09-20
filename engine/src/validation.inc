@@ -122,8 +122,9 @@ FN BHCorrection
     jnz 1b
     END
 
-# Full rolling-origin challenger validation: every cutoff from 60 to N-1.
-# Every fold rebuilds normalization, spectral/covariance/triple models, the
+# Full rolling-origin challenger validation over the resolved target window.
+# Every target sees only its preceding rows. Every fold rebuilds normalization,
+# spectral/covariance/triple models, the
 # exhaustive 8,145,060 scan, geometry, 32 worlds and thermal field using prefix
 # data only. Champion remains uniform until independent gates below pass.
 FN ValidateHistory,32
