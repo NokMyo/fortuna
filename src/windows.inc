@@ -221,7 +221,7 @@ FN BenchmarkPerformance
     mov dword ptr [rip+estimate_ready],0
     END
 
-# Recalculate displayed estimates when the visible backtest range changes.
+# Recalculate displayed estimates when the visible analysis-history range changes.
 # Values are calibrated estimates, not completion deadlines.
 FN UpdateEstimatedTimes,32
     cmp dword ptr [rip+benchmark_ready],1
@@ -244,6 +244,10 @@ FN UpdateEstimatedTimes,32
     mov ebp,eax
     cmp dword ptr [rip+ui_int_ok],0
     je .uet_invalid
+    cmp ebx,[rip+available_first_round]
+    jb .uet_invalid
+    cmp ebp,[rip+available_last_round]
+    ja .uet_invalid
     cmp ebp,ebx
     jb .uet_invalid
     mov eax,ebp
@@ -330,7 +334,7 @@ FN UpdateEstimatedTimes,32
     call SetDlgItemTextW
 .uet_out: END 32
 
-# Apply visible target-round range to the engine. Returns 1 on success.
+# Apply the visible historical analysis range to the engine. Returns 1 on success.
 FN ApplyBacktestRangeFromUI
     mov dword ptr [rip+ui_int_ok],0
     mov rcx,[rip+h_main]
@@ -350,6 +354,17 @@ FN ApplyBacktestRangeFromUI
     mov ebp,eax
     cmp dword ptr [rip+ui_int_ok],0
     je .abr_fail
+    cmp ebx,[rip+available_first_round]
+    jb .abr_fail
+    cmp ebp,[rip+available_last_round]
+    ja .abr_fail
+    cmp ebp,ebx
+    jb .abr_fail
+    mov eax,ebp
+    sub eax,ebx
+    inc eax
+    cmp eax,60
+    jb .abr_fail
     mov ecx,ebx
     mov edx,ebp
     call ConfigureBacktestRange

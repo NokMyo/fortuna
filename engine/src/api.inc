@@ -24,7 +24,7 @@ FN FortunaOracleGetAbiVersion
     mov eax,0x10000
     END
 FN FortunaOracleGetEngineVersion
-    mov eax,0x10600
+    mov eax,0x10700
     END
 FN ApiLock
     lea rcx,[rip+api_lock]
@@ -76,53 +76,36 @@ FN FortunaOracleSetBacktestRange
     call ApiLock
     test eax,eax
     jnz .sbr_out
+    # 0,0 restores the full loaded source range.
     test ebx,ebx
     jnz .sbr_custom
     test esi,esi
     jnz .sbr_arg_locked
-    jmp .sbr_valid
+    mov ebx,[rip+source_first_round]
+    mov esi,[rip+source_last_round]
 .sbr_custom:
+    cmp dword ptr [rip+source_history_count],60
+    jb .sbr_arg_locked
+    test ebx,ebx
+    jz .sbr_arg_locked
     test esi,esi
     jz .sbr_arg_locked
-    mov eax,[rip+history_count]
-    cmp eax,120
-    jb .sbr_arg_locked
-    mov r8d,[rip+history]
-    lea eax,[r8+60]
-    cmp ebx,eax
-    jb .sbr_arg_locked
-    cmp esi,[rip+last_round]
-    ja .sbr_arg_locked
-    cmp esi,ebx
-    jb .sbr_arg_locked
     mov eax,esi
     sub eax,ebx
+    jc .sbr_arg_locked
     inc eax
     cmp eax,60
     jb .sbr_arg_locked
-.sbr_valid:
     cmp ebx,[rip+backtest_start_round]
-    jne .sbr_change
+    jne .sbr_apply
     cmp esi,[rip+backtest_end_round]
     je .sbr_success
-.sbr_change:
-    mov [rip+backtest_start_round],ebx
-    mov [rip+backtest_end_round],esi
-    mov dword ptr [rip+model_ready],0
-    mov dword ptr [rip+field_ready],0
-    mov dword ptr [rip+field_count],0
-    mov dword ptr [rip+research_ready],0
-    mov dword ptr [rip+advanced_ready],0
-    mov dword ptr [rip+ti_ready],0
-    mov dword ptr [rip+forecast_valid],0
-    mov dword ptr [rip+validation_complete],0
-    mov dword ptr [rip+validation_count],0
-    mov dword ptr [rip+session_count],0
-    mov qword ptr [rip+selected_mask],0
-    mov dword ptr [rip+selected_index],0
-    mov qword ptr [rip+evidence],0
-    movsd xmm0,[rip+one]
-    movsd [rip+rho],xmm0
+.sbr_apply:
+    mov ecx,ebx
+    mov edx,esi
+    call ActivateHistoryRange
+    test eax,eax
+    jz .sbr_arg_locked
 .sbr_success:
     xor ecx,ecx
     call ApiFinish
@@ -237,7 +220,7 @@ FN FortunaOracleGetSnapshot
     call Zero
     mov dword ptr [rbx],272
     mov dword ptr [rbx+4],0x10000
-    mov dword ptr [rbx+8],0x10600
+    mov dword ptr [rbx+8],0x10700
     mov eax,[rip+model_ready]
     shl eax,1
     or eax,[rip+field_ready]

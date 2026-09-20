@@ -27,19 +27,30 @@ for raw in [b'1,1,1,3,4,5,6\n',b'1,0,2,3,4,5,6',b'1,1,2,3,4,5,46',
 rev=b'round,n1,n2,n3,n4,n5,n6\r\n'+b''.join((str(i+1)+','+','.join(map(str,reversed(rows[i])))+'\r\n').encode() for i in range(119,-1,-1))
 assert parse(rev,len(rev))==1
 assert bytes(array(lib,'hash_dataset',32,C.c_ubyte))==hash_before
-# Custom target-round windows resolve to prefix-only indices and reserve the
-# final 30 selected targets for independent confirmation.
-scalar(lib,'backtest_start_round').value=61
-scalar(lib,'backtest_end_round').value=120
+# Analysis range activation is stronger than fold selection: the active history
+# itself is sliced, so final fitting and next-round target cannot read later rows.
+activate=fn(lib,'ActivateHistoryRange',(C.c_uint32,C.c_uint32))
+assert activate(0,59)==0
+assert activate(1,59)==1
+assert scalar(lib,'history_count').value==59
+assert fn(lib,'ResolveBacktestRange')()==0
+assert activate(1,60)==1
+assert scalar(lib,'history_count').value==60
+assert scalar(lib,'last_round').value==60
+assert scalar(lib,'backtest_start_round').value==1
+assert scalar(lib,'backtest_end_round').value==60
 assert fn(lib,'ResolveBacktestRange')()==1
 assert scalar(lib,'backtest_start_index').value==60
-assert scalar(lib,'backtest_end_index').value==120
-assert scalar(lib,'validation_stop').value==90
-scalar(lib,'backtest_end_round').value=119
-assert fn(lib,'ResolveBacktestRange')()==0
-scalar(lib,'backtest_start_round').value=0
-scalar(lib,'backtest_end_round').value=0
+assert scalar(lib,'backtest_end_index').value==60
+assert activate(31,120)==1
+assert scalar(lib,'history_count').value==90
+assert scalar(lib,'last_round').value==120
 assert fn(lib,'ResolveBacktestRange')()==1
+assert scalar(lib,'backtest_start_index').value==60
+assert scalar(lib,'backtest_end_index').value==90
+assert activate(1,120)==1
+assert scalar(lib,'history_count').value==120
+assert scalar(lib,'validation_stop').value==90
 rebuild(60)
 assert sum(array(lib,'freq_total',45,C.c_uint32))==360
 assert sum(array(lib,'triple_counts',14190,C.c_uint32))==1200

@@ -1,3 +1,67 @@
+# Activate an inclusive source-history range as the dataset seen by every
+# analysis component. rcx=first round, rdx=last round. Requires >=60 rows.
+# This is intentionally stronger than selecting validation folds: final fitting,
+# reports, target round and deep analysis all see only the activated slice.
+FN ActivateHistoryRange
+    mov ebx,ecx
+    mov esi,edx
+    mov eax,[rip+source_history_count]
+    cmp eax,1
+    jb .ahr_fail
+    cmp ebx,[rip+source_first_round]
+    jb .ahr_fail
+    cmp esi,[rip+source_last_round]
+    ja .ahr_fail
+    cmp esi,ebx
+    jb .ahr_fail
+    mov ebp,esi
+    sub ebp,ebx
+    inc ebp
+    cmp ebp,1
+    jb .ahr_fail
+    mov eax,ebx
+    sub eax,[rip+source_first_round]
+    imul eax,eax,RECORD_SIZE
+    lea rdx,[rip+source_history]
+    add rdx,rax
+    lea rcx,[rip+history]
+    mov r8d,ebp
+    imul r8d,r8d,RECORD_SIZE
+    call Copy
+    mov [rip+history_count],ebp
+    mov [rip+last_round],esi
+    mov [rip+backtest_start_round],ebx
+    mov [rip+backtest_end_round],esi
+    mov dword ptr [rip+backtest_start_index],60
+    mov [rip+backtest_end_index],ebp
+    mov dword ptr [rip+model_ready],0
+    mov dword ptr [rip+research_ready],0
+    mov dword ptr [rip+advanced_ready],0
+    mov dword ptr [rip+ti_ready],0
+    mov dword ptr [rip+forecast_valid],0
+    mov dword ptr [rip+field_ready],0
+    mov dword ptr [rip+field_count],0
+    mov dword ptr [rip+session_count],0
+    mov qword ptr [rip+selected_mask],0
+    mov dword ptr [rip+selected_index],0
+    mov dword ptr [rip+validation_complete],0
+    mov dword ptr [rip+validation_count],0
+    mov qword ptr [rip+evidence],0
+    movsd xmm0,[rip+one]
+    movsd [rip+rho],xmm0
+    lea rcx,[rip+history]
+    mov edx,[rip+history_count]
+    imul edx,edx,RECORD_SIZE
+    lea r8,[rip+hash_dataset]
+    call Sha256
+    mov ecx,[rip+history_count]
+    call RebuildStats
+    mov eax,1
+    jmp .ahr_out
+.ahr_fail:
+    xor eax,eax
+.ahr_out: END
+
 # Strict transactional CSV. No silently skipped malformed rows.
 # record: round:u32,date:YYYYMMDD,u32 numbers[6],bonus:u32,reserved:u32,mask:u64.
 # Returns 1; on failure history and active field are untouched. parse_error and
@@ -302,44 +366,24 @@ FN ParseCsv,96
 3:  inc esi
     jmp 1b
 .csv_commit:
-    lea rcx,[rip+history]
+    # Preserve the complete imported dataset, then activate its full range.
+    lea rcx,[rip+source_history]
     lea rdx,[rip+staging]
     mov r8d,[rip+staging_count]
     imul r8d,r8d,RECORD_SIZE
     call Copy
     mov eax,[rip+staging_count]
-    mov [rip+history_count],eax
+    mov [rip+source_history_count],eax
+    lea rdx,[rip+source_history]
+    mov ecx,[rdx]
+    mov [rip+source_first_round],ecx
     dec eax
     imul eax,eax,RECORD_SIZE
-    mov ecx,[rbx+rax]
-    mov [rip+last_round],ecx
-    # A new dataset always returns to its automatic backtest window.
-    mov dword ptr [rip+backtest_start_round],0
-    mov dword ptr [rip+backtest_end_round],0
-    mov dword ptr [rip+backtest_start_index],60
-    mov eax,[rip+history_count]
-    mov [rip+backtest_end_index],eax
-    mov dword ptr [rip+model_ready],0
-    mov dword ptr [rip+research_ready],0
-    mov dword ptr [rip+ti_ready],0
-    mov dword ptr [rip+forecast_valid],0
-    mov dword ptr [rip+field_ready],0
-    mov dword ptr [rip+field_count],0
-    mov dword ptr [rip+session_count],0
-    mov qword ptr [rip+selected_mask],0
-    mov dword ptr [rip+selected_index],0
-    mov dword ptr [rip+validation_complete],0
-    mov dword ptr [rip+validation_count],0
-    mov dword ptr [rip+model_ready],0
-    movsd xmm0,[rip+one]
-    movsd [rip+rho],xmm0
-    lea rcx,[rip+history]
-    mov edx,[rip+history_count]
-    imul edx,edx,RECORD_SIZE
-    lea r8,[rip+hash_dataset]
-    call Sha256
-    mov ecx,[rip+history_count]
-    call RebuildStats
+    mov edx,[rdx+rax]
+    mov [rip+source_last_round],edx
+    call ActivateHistoryRange
+    test eax,eax
+    jz .csv_bad_format
     mov eax,1
     jmp .csv_out
 .csv_bad_format: mov eax,1; jmp .csv_fail

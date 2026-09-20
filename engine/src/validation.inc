@@ -26,51 +26,19 @@ confirmation_end:
 .equ CONFIRMATION_BYTES,confirmation_end-confirmation_begin
 confirmation_null: .skip NULL_COUNT*8
 .section .text
-# Resolve the configured inclusive target-round window to zero-based history
-# indices. Automatic mode preserves the legacy policy: every target after the
-# first 60 training rows, with the last 30 reserved for confirmation only when
-# at least 120 rows exist. A custom window always contains at least 60 targets,
-# so 30 learning folds and 30 independent confirmation folds remain available.
+# Resolve causal validation inside the already-activated analysis history.
+# The selected UI range itself may begin at round 1. Its first 60 rows are
+# training-only; later rows are walk-forward targets. With >=120 selected rows,
+# the final 30 targets are held out for independent confirmation.
 FN ResolveBacktestRange
     mov eax,[rip+history_count]
     cmp eax,60
     jb .rbr_fail
     mov dword ptr [rip+backtest_start_index],60
     mov [rip+backtest_end_index],eax
-    mov dword ptr [rip+validation_stop],eax
-    cmp dword ptr [rip+backtest_start_round],0
-    jne .rbr_custom
-    cmp dword ptr [rip+backtest_end_round],0
-    jne .rbr_fail
+    mov [rip+validation_stop],eax
     cmp eax,120
     jb .rbr_ok
-    sub eax,30
-    mov [rip+validation_stop],eax
-    jmp .rbr_ok
-.rbr_custom:
-    cmp dword ptr [rip+backtest_end_round],0
-    je .rbr_fail
-    mov r8d,[rip+history]
-    mov eax,[rip+backtest_start_round]
-    sub eax,r8d
-    jc .rbr_fail
-    cmp eax,60
-    jb .rbr_fail
-    mov ebx,eax
-    mov eax,[rip+backtest_end_round]
-    sub eax,r8d
-    jc .rbr_fail
-    inc eax
-    cmp eax,[rip+history_count]
-    ja .rbr_fail
-    cmp eax,ebx
-    jbe .rbr_fail
-    mov ecx,eax
-    sub ecx,ebx
-    cmp ecx,60
-    jb .rbr_fail
-    mov [rip+backtest_start_index],ebx
-    mov [rip+backtest_end_index],eax
     sub eax,30
     mov [rip+validation_stop],eax
 .rbr_ok:

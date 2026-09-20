@@ -622,10 +622,11 @@ FN DialogProc,128
 1:  cmp dword ptr [rip+analysis_busy],1
     jne .dp_timer_idle
     call ReadEngineProgress
-    mov eax,[rip+validation_count]
+    mov eax,[rip+last_round]
+    sub eax,[rip+history_count]
+    inc eax
     mov [rsp+32],rax
-    mov eax,[rip+history_count]
-    sub eax,60
+    mov eax,[rip+last_round]
     mov [rsp+40],rax
     lea rcx,[rip+ui_status]
     lea rdx,[rip+fmt_busy]
@@ -758,33 +759,37 @@ FN AnalysisThread
     END
 
 FN UpdateDataUI,16
+    # Loaded files are contiguous, so the available first round is derived from
+    # the full loaded count before any user range is activated.
     mov eax,[rip+last_round]
+    sub eax,[rip+history_count]
     inc eax
-    mov [rsp+32],rax
+    mov [rip+available_first_round],eax
+    mov ecx,[rip+last_round]
+    mov [rip+available_last_round],ecx
     lea rcx,[rip+ui_status]
-    lea rdx,[rip+fmt_data]
-    mov r8d,[rip+history_count]
-    mov r9d,[rip+last_round]
+    lea rdx,[rip+fmt_available_range]
+    mov r8d,[rip+available_first_round]
+    mov r9d,[rip+available_last_round]
     call wsprintfW
     mov rcx,[rip+h_main]
     mov edx,1105
     lea r8,[rip+ui_status]
     call SetDlgItemTextW
-    # Default visible backtest window spans every eligible target through the
-    # latest loaded round. The engine still reserves its final 30 as confirmation.
-    mov eax,[rip+last_round]
-    sub eax,[rip+history_count]
-    add eax,61
-    mov r8d,eax
+    mov r8d,[rip+available_first_round]
     mov rcx,[rip+h_main]
     mov edx,ID_BACKTEST_START
     xor r9d,r9d
     call SetDlgItemInt
-    mov r8d,[rip+last_round]
+    mov r8d,[rip+available_last_round]
     mov rcx,[rip+h_main]
     mov edx,ID_BACKTEST_END
     xor r9d,r9d
     call SetDlgItemInt
+    mov rcx,[rip+h_main]
+    mov edx,1107
+    lea r8,[rip+empty]
+    call SetDlgItemTextW
     mov dword ptr [rip+estimate_ready],0
     call UpdateEstimatedTimes
     END 16

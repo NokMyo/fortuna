@@ -1,4 +1,4 @@
-# Fortuna ORACLE Engine 1.6.0
+# Fortuna ORACLE Engine 1.7.0
 
 양쪽 기본 ORACLE 경로에 다중 기간·관계 보정과 순차 검증을 추가했습니다.
 [수식·계산량·API·검증 명세](docs/DEPTH_VALIDATION.md)
@@ -37,6 +37,6 @@ Linux 교차 빌드는 `sh scripts/build-linux.sh`로 정적 라이브러리를 
 
 `joint.inc`, `research.inc`, `forecast.inc`가 공동 확률모형, 축소, 탐색 누락 감사, 완전한 성분 제거 재검증, 중첩 검증, 적응적 섭동과 사전 예측 기록을 구현합니다. [계산 규격과 제한](docs/RESEARCH.md)을 기준으로 사용하세요. 공개 API는 기존 ABI 1.0 구조체를 유지하고 연구용 함수를 추가했습니다. 일반 분석과 연구 분석은 같은 엔진 잠금을 사용합니다.
 
-`FortunaOracleSetBacktestRange(first,last)`는 평가 대상 회차의 inclusive 범위를 설정합니다. 각 대상은 그 이전 행만 학습하며 선택 범위의 마지막 30개 대상은 독립 확인으로 유보합니다. `0,0`은 자동 범위로 복귀합니다.
+`FortunaOracleSetBacktestRange(first,last)`는 이름의 ABI 호환성을 유지하면서 **엔진 전체가 실제로 사용할 과거 이력 범위**를 설정합니다. 선택 범위는 최소 60개 연속 회차이며, 범위 밖의 이후 행은 최종 fitting·검증·보고서에서 보이지 않습니다. 예를 들어 1~432를 활성화하면 엔진의 latest round는 432이고 다음 대상은 433입니다. `0,0`은 로드된 원본 전체 범위로 복귀합니다.
 
 `FortunaOracleGenerateUniform`은 완료된 분석을 보존하면서 균등 무작위 추첨합니다. `Generate`는 표준 검증 정책, `GenerateResearch`는 완료된 심층 공동 모형을 사용합니다.

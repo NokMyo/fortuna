@@ -3,11 +3,11 @@ r_header: .asciz "\357\273\277Fortuna ORACLE Engine 1.1.0 / reference report\r\n
 r_config: .asciz "\r\nConfig SHA-256: "
 r_field: .asciz "\r\nCandidate-field SHA-256: "
 r_count: .asciz "\r\nDraws / latest / target: "
-r_backtest: .asciz "\r\nBacktest targets / selected targets / confirmation folds: "
+r_backtest: .asciz "\r\nBacktest targets / active history / selected targets / confirmation folds: "
 r_slash: .asciz " / "
 r_newline: .asciz "\r\n"
 r_comma: .asciz ","
-r_validation: .asciz "\r\nFULL WALK-FORWARD / fixed descriptive challenger\r\nTargets are restricted to the selected backtest window and use only prior rows; its final 30 targets are reserved for independent confirmation.\r\nEach fold refits all models, exhaustive scan, geometry and counterfactual worlds.\r\nFolds,mean_hits,matched_null_p,null_mean_95lo,null_mean_95hi,brier,uniform_brier,ECE\r\n"
+r_validation: .asciz "\r\nFULL WALK-FORWARD / fixed descriptive challenger\r\nThe active historical range is fixed before fitting; each walk-forward target uses only prior active rows, and the final 30 eligible targets are reserved for independent confirmation.\r\nEach fold refits all models, exhaustive scan, geometry and counterfactual worlds.\r\nFolds,mean_hits,matched_null_p,null_mean_95lo,null_mean_95hi,brier,uniform_brier,ECE\r\n"
 r_confirmation: .asciz "\r\nIndependent policy confirmation (0=not eligible,1=pass,2=reject)\r\nstatus,folds,total_hits,brier,matched_null_p\r\n"
 r_policy: .asciz "\r\nValidated sampling policy\r\nEvidence budget,uniform_mixture,temperature,field_entropy\r\n"
 r_models: .asciz "\r\nModels (weights multiply the evidence budget; HSSM is a separate heuristic)\r\nmodel,p,q_BH,gate,relative_weight,robust_center,robust_scale\r\n"
@@ -29,7 +29,7 @@ r_numbers: .asciz "\r\nNumber,persistence_in_field,policy_inclusion_probability\
 r_candidates: .asciz "\r\nConditional candidate field (not global jackpot ranks)\r\nmask,n1,n2,n3,n4,n5,n6,descriptive_score,energy,oracle_probability,OBG,FBV,FSS,neighbor_variance,COS,FRP10,FRP100,median_world_rank\r\n"
 r_confirm_rows: .asciz "\r\nIndependent confirmation folds (same columns)\r\n"
 r_folds: .asciz "\r\nHeld-out folds\r\nround,training_rows,pick_mask,actual_mask,hits,actual_fast_rank_of_8145060,brier\r\n"
-r_limits: .asciz "\r\nMethod notes\r\nCounterfactual ranks are conditional on 512 survivors; 32 worlds.\r\nMonte Carlo uses 512 matched baselines; p resolution is 1/513.\r\nModel OMD tests use held-out normalized-score utility; OCSG uses leave-one-model-out additive utility.\r\nLearned weights require the selected window's separate last-30 confirmation before promotion.\r\nEvidence is advisory; no predictive superiority is asserted. HSSM has no ticket-sales calibration.\r\nA local hash chain detects edits relative to a trusted anchor; it is not external timestamp proof.\r\nSee docs/IMPLEMENTATION.md for exact implemented formulas and unimplemented research extensions.\r\n"
+r_limits: .asciz "\r\nMethod notes\r\nCounterfactual ranks are conditional on 512 survivors; 32 worlds.\r\nMonte Carlo uses 512 matched baselines; p resolution is 1/513.\r\nModel OMD tests use held-out normalized-score utility; OCSG uses leave-one-model-out additive utility.\r\nLearned weights require the active history's separate last-30 confirmation before promotion.\r\nEvidence is advisory; no predictive superiority is asserted. HSSM has no ticket-sales calibration.\r\nA local hash chain detects edits relative to a trusted anchor; it is not external timestamp proof.\r\nSee docs/IMPLEMENTATION.md for exact implemented formulas and unimplemented research extensions.\r\n"
 hex_digits: .ascii "0123456789abcdef"
 .section .bss
 report_buffer: .skip 2097152

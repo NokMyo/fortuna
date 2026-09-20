@@ -5,6 +5,8 @@ rho: .double 1.0
 .p2align 4
 history_count: .skip 4
 last_round: .skip 4
+available_first_round: .skip 4
+available_last_round: .skip 4
 parse_error: .skip 4
 parse_line: .skip 4
 model_ready: .skip 4

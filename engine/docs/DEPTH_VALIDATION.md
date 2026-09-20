@@ -1,4 +1,4 @@
-# Depth validation 1.0 — app 1.9.1 / engine 1.6.0
+# Depth validation 1.0 — app 1.10.0 / engine 1.7.0
 
 This layer extends the existing ten-function pipeline in **both** product ORACLE
 modes. `src/depth.inc` and `src/depth_api.inc` are x64 assembly. Python is used
@@ -143,11 +143,29 @@ the last untouched outer draw. The report gives the maximum change. Loss CUSUM
 uses c[t]=max(0,c[t-1]-gain[t]) and reports max c. These are sensitivity/drift
 diagnostics with no calibrated rejection threshold.
 
-## Configurable causal backtest window
+## Configurable historical analysis range
 
-Engine 1.6 adds an inclusive target-round window. The window changes which historical outcomes are used as walk-forward evaluation targets; it does not change the final fit, which still uses the complete loaded history. Each target is predicted from rows strictly before that target. A custom window requires at least 60 training rows before its first target and at least 60 targets total. The last 30 selected targets are reserved for independent confirmation, leaving at least 30 learning folds. Integrated chronological folds and deep nested validation are also anchored inside the selected target window.
+Engine 1.7 changes the range control from a validation-only target window to the
+historical dataset seen by the entire pipeline. The complete imported source is
+preserved separately; selecting an inclusive range copies only that slice into
+the active history. Final fitting, ordinary validation, integrated inference,
+deep nested validation, reports and the next-round target therefore cannot read
+rows after the selected end round.
 
-Changing the range invalidates completed normal/deep analysis state. The same dataset and same range may reuse a completed result. The GUI time estimate is a hardware-calibrated scheduling hint, not a statistical quantity and not a completion guarantee.
+A selected range must contain at least 60 contiguous draws and may start at the
+first loaded round. Within the active range, the first 60 rows are training-only.
+Later rows are evaluated causally from strictly earlier rows. If the active range
+contains at least 120 rows, its final 30 evaluation targets are reserved for
+independent confirmation. SetBacktestRange(0,0) restores the full loaded source.
+
+For example, with source history 1..1242, selecting 1..432 makes the engine
+snapshot report history_count=432 and last_round=432; the forecast target is
+therefore 433. Rounds 433..1242 remain only in the preserved source buffer and do
+not participate in that analysis.
+
+Changing the range invalidates completed normal/deep analysis state. The GUI time
+estimate is a hardware-calibrated scheduling hint, not a statistical quantity and
+not a completion guarantee.
 
 ## Normal-mode gate and cost
 

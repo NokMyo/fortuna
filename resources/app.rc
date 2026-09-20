@@ -1,6 +1,6 @@
 #pragma code_page(65001)
 #include <windows.h>
-101 DIALOGEX 0, 0, 590, 490
+101 DIALOGEX 0, 0, 590, 445
 STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Febius Fortuna"
@@ -9,7 +9,7 @@ FONT 9, "Malgun Gothic", 400, 0, 1
 BEGIN
     LTEXT "FEBIUS  /  UTILITY SERIES", -1, 12, 9, 400, 12
     LTEXT "Fortuna", 1100, 12, 23, 260, 29
-    RTEXT "Powered by Fortuna ORACLE Engine\nAPP 1.9.1", -1, 398, 24, 180, 25
+    RTEXT "Powered by Fortuna ORACLE Engine\nAPP 1.10.0", -1, 398, 24, 180, 25
     CONTROL "", -1, "STATIC", SS_ETCHEDHORZ, 12, 58, 566, 1
     GROUPBOX "생성한 번호", -1, 12, 67, 354, 190
     LTEXT "--   --   --   --   --   --", 1101, 24, 84, 330, 37, SS_CENTER | SS_CENTERIMAGE
@@ -31,20 +31,16 @@ BEGIN
     CTEXT "균등 무작위",-1,24,307,174,12
     CTEXT "일반 분석 • 성능 측정 중",1130,206,307,174,12
     CTEXT "정밀 분석 • 성능 측정 중",1131,388,307,178,12
-    GROUPBOX "백테스트 범위", -1, 12, 331, 566, 39
+    GROUPBOX "분석 범위", -1, 12, 331, 566, 55
     LTEXT "시작 회차",-1,24,344,50,14
     EDITTEXT 1132,78,340,64,18,ES_NUMBER | ES_AUTOHSCROLL
     LTEXT "종료 회차",-1,158,344,50,14
     EDITTEXT 1133,212,340,64,18,ES_NUMBER | ES_AUTOHSCROLL
-    LTEXT "평가 대상 회차 · 직전 데이터만 학습 · 범위 최소 60회",-1,292,341,274,20
-    GROUPBOX "회차 데이터", -1, 12, 374, 566, 45
-    LTEXT "내장 추첨 데이터 1~1242회차가 기본으로 로드됩니다.", 1105, 24, 386, 356, 24
-    PUSHBUTTON "외부 CSV", 1001, 478, 385, 88, 22
-    CONTROL "", 1106, "msctls_progress32", WS_BORDER, 12, 426, 472, 11
-    PUSHBUTTON "분석 취소", 1004, 492, 423, 86, 18
-    LTEXT "준비되었습니다. 1~1242회차 기본 데이터가 내장되어 있습니다.", 1107, 12, 445, 566, 14
-    CONTROL "", -1, "STATIC", SS_ETCHEDHORZ, 12, 463, 566, 1
-    LTEXT "오라클 지수는 내부 분석 지표입니다. 모든 조합의 실제 1등 확률은 1 / 8,145,060으로 같습니다.", -1, 12, 471, 566, 12
+    PUSHBUTTON "외부 CSV", 1001, 478, 340, 88, 20
+    LTEXT "사용 가능 범위: -", 1105, 24, 366, 430, 14
+    CONTROL "", 1106, "msctls_progress32", WS_BORDER, 12, 397, 472, 11
+    PUSHBUTTON "분석 취소", 1004, 492, 394, 86, 18
+    LTEXT "", 1107, 12, 417, 566, 14
 END
 200 MENU
 BEGIN
@@ -91,13 +87,13 @@ CAPTION "Febius Fortuna 정보"
 FONT 9,"Malgun Gothic"
 BEGIN
     LTEXT "FEBIUS  /  UTILITY SERIES", -1,12,12,270,12
-    LTEXT "Febius Fortuna 1.9.1",-1,12,33,270,20
+    LTEXT "Febius Fortuna 1.10.0",-1,12,33,270,20
     LTEXT "분석적 무작위 번호 생성기\nWindows x64 · Assembly · CRT 비의존\n\nORACLE Field Architecture\n© 2026 nokmyo. All rights reserved.",-1,12,57,275,66
     DEFPUSHBUTTON "확인",IDOK,230,128,58,18
 END
 1 VERSIONINFO
-FILEVERSION 1,9,1,0
-PRODUCTVERSION 1,9,1,0
+FILEVERSION 1,10,0,0
+PRODUCTVERSION 1,10,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0
 FILEOS VOS_NT_WINDOWS32
@@ -109,12 +105,12 @@ BEGIN
   BEGIN
    VALUE "CompanyName", "Febius\0"
    VALUE "FileDescription", "Febius Fortuna\0"
-   VALUE "FileVersion", "1.9.1\0"
+   VALUE "FileVersion", "1.10.0\0"
    VALUE "InternalName", "FebiusFortuna\0"
    VALUE "LegalCopyright", "© 2026 nokmyo. All rights reserved.\0"
    VALUE "OriginalFilename", "FebiusFortuna.exe\0"
    VALUE "ProductName", "Febius Fortuna\0"
-   VALUE "ProductVersion", "1.9.1\0"
+   VALUE "ProductVersion", "1.10.0\0"
   END
  END
  BLOCK "VarFileInfo"
@@ -130,7 +126,7 @@ CAPTION "Fortuna ORACLE Engine"
 FONT 9,"Malgun Gothic"
 BEGIN
  LTEXT "FORTUNA  /  ORACLE ENGINE",-1,12,12,296,16
- LTEXT "Engine 1.6.0  ·  ABI 1.0  ·  Windows x64",1201,12,36,296,16
+ LTEXT "Engine 1.7.0  ·  ABI 1.0  ·  Windows x64",1201,12,36,296,16
  LTEXT "Fortuna ORACLE Engine — 프로그램 내장\n\n어셈블리어 · 통계 분석 · 전수 탐색 · 순차 검증\n\n앱과 독립된 호출 규격으로 다른 프로그램에서도\n동일한 오라클 엔진을 사용할 수 있습니다.",-1,12,60,296,72
  DEFPUSHBUTTON "확인",IDOK,248,142,60,18
 END

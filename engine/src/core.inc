@@ -112,10 +112,14 @@ progress: .long 0
 analysis_stage: .long 0
 history_count: .long 0
 last_round: .long 0
-# Requested backtest target rounds. 0/0 means automatic full available range.
+# Full loaded source dataset and currently activated analysis range.
+source_history_count: .long 0
+source_first_round: .long 0
+source_last_round: .long 0
 backtest_start_round: .long 0
 backtest_end_round: .long 0
-# Resolved zero-based target-row range [start,end), refreshed per analysis.
+# Causal validation targets inside the active analysis range. The first
+# 60 active rows are training-only; the rest may become validation targets.
 backtest_start_index: .long 60
 backtest_end_index: .long 0
 parse_error: .long 0
@@ -128,11 +132,14 @@ rho: .double 1.0
 evidence: .double 0.0
 temperature: .double 1.0
 elapsed_ms: .quad 0
-config_version: .asciz "OFA-research-1.1;JOINT=EB-residual-45C6;caps=.05/.02/.01;shrink=.5/1/2;inner=4;outer_max=30;worlds=8..32;MC_SE=.0005;audit=512/65536;expanded=8192;forecast=FJP1/half-uniform;K=4096/512;models=12;worlds=32;null=512;seed=20260913;gate=0.05;min_train=60;min_test=30;confirmation=30;min_promote=120;backtest=target-range-v1"
+config_version: .asciz "OFA-research-1.1;JOINT=EB-residual-45C6;caps=.05/.02/.01;shrink=.5/1/2;inner=4;outer_max=30;worlds=8..32;MC_SE=.0005;audit=512/65536;expanded=8192;forecast=FJP1/half-uniform;K=4096/512;models=12;worlds=32;null=512;seed=20260913;gate=0.05;min_train=60;min_test=30;confirmation=30;min_promote=120;analysis=history-range-v2"
 
 .section .bss
 .p2align 4
 history: .skip MAX_DRAWS*RECORD_SIZE
+# Immutable source copy for the current loaded file. Range changes rebuild the
+# active history from here, so selecting 1..432 truly removes 433+ from fitting.
+source_history: .skip MAX_DRAWS*RECORD_SIZE
 staging: .skip MAX_DRAWS*RECORD_SIZE
 staging_count: .skip 4
 csv_columns: .skip 10*8
